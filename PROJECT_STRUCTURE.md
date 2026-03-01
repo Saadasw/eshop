@@ -36,7 +36,7 @@ eshop/                                    ← Root (git init here, open in Claud
 │   │   │   ├── __init__.py
 │   │   │   ├── session.py                ← AsyncSession factory (Supabase connection)
 │   │   │   ├── base.py                   ← SQLAlchemy Base + common mixins
-│   │   │   └── supabase.py               ← Supabase client (storage, auth, realtime)
+│   │   │   └── supabase.py               ← Supabase client (realtime subscriptions, raw SDK access if needed)
 │   │   │
 │   │   ├── models/                       ← SQLAlchemy ORM models (1 file per domain)
 │   │   │   ├── __init__.py               ← Re-export all models
@@ -111,7 +111,7 @@ eshop/                                    ← Root (git init here, open in Claud
 │   │   │   ├── payout_service.py         ← Commission calculation, payout generation
 │   │   │   ├── audit_service.py          ← Audit log creation, archival jobs
 │   │   │   ├── bulk_service.py           ← CSV import/export processing
-│   │   │   └── storage_service.py        ← Supabase Storage for file uploads (images, CSVs)
+│   │   │   └── storage_service.py        ← File uploads via StorageBackend protocol (images, CSVs)
 │   │   │
 │   │   ├── core/                         ← Cross-cutting concerns
 │   │   │   ├── __init__.py
@@ -119,11 +119,14 @@ eshop/                                    ← Root (git init here, open in Claud
 │   │   │   ├── permissions.py            ← RBAC: is_owner, is_staff, is_admin, has_permission
 │   │   │   ├── exceptions.py             ← Custom HTTP exceptions
 │   │   │   ├── pagination.py             ← Cursor-based pagination helper
-│   │   │   └── rate_limiter.py           ← Rate limiting (slowapi or custom)
+│   │   │   ├── rate_limiter.py           ← Rate limiting (slowapi or custom)
+│   │   │   ├── storage.py               ← StorageBackend protocol + SupabaseStorage (vendor-agnostic file storage)
+│   │   │   ├── auth_verifier.py         ← AuthVerifier protocol + SupabaseAuthVerifier (vendor-agnostic auth)
+│   │   │   └── state_machines.py        ← Order/Shop/Payment/Refund/Payout status transitions
 │   │   │
 │   │   └── utils/
 │   │       ├── __init__.py
-│   │       ├── order_number.py           ← Generate order numbers (KHG-YYMMDD-XXXX)
+│   │       ├── order_number.py           ← Generate order numbers (ESH-YYMMDD-XXXX)
 │   │       ├── slug.py                   ← Slugify shop/category names
 │   │       ├── validators.py             ← Phone number (BD), email, NID validation
 │   │       └── bd_payments.py            ← bKash/Nagad API client helpers
@@ -137,7 +140,7 @@ eshop/                                    ← Root (git init here, open in Claud
 │       ├── test_orders.py
 │       └── test_payments.py
 │
-├── frontend/                             ← Next.js 14+ (App Router)
+├── frontend/                             ← Next.js 16 (App Router)
 │   ├── .env.local                        ← Frontend env (not committed)
 │   ├── .env.example
 │   ├── next.config.ts

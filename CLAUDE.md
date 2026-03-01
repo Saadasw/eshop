@@ -11,7 +11,7 @@ A multi-tenant e-commerce platform where physical shops in Khilgaon, Dhaka can c
 |---|---|---|
 | Database | **Supabase (PostgreSQL 16)** | Managed Postgres, built-in auth, storage, realtime |
 | Backend | **FastAPI (Python 3.12+)** | Async, auto-docs, Pydantic v2 type safety |
-| Frontend | **Next.js 14+ (App Router, TypeScript)** | SSR/SSG for SEO, React Server Components |
+| Frontend | **Next.js 16 (App Router, TypeScript)** | SSR/SSG for SEO, React Server Components, Turbopack |
 | ORM | **SQLAlchemy 2.0 (async)** | Maps to our existing schema perfectly |
 | Auth | **Supabase Auth + JWT** | Supabase handles registration/login, FastAPI validates JWT |
 | Storage | **Supabase Storage** | Product images, shop logos, CSV uploads |
@@ -162,7 +162,85 @@ def validate_order_transition(current: str, new: str) -> bool:
 
 Same pattern for: Shop status, Payment status, Refund status, Payout status. Define them all in `app/core/state_machines.py`.
 
-### 8. API URL Structure
+### 8. Vendor-Agnostic Abstractions
+
+The project uses Supabase for auth verification and file storage, but these are abstracted behind protocols so the provider can be swapped without changing business logic.
+
+```python
+# app/core/storage.py — File Storage Abstraction
+from typing import Protocol
+
+class StorageBackend(Protocol):
+    async def upload(self, bucket: str, path: str, file: bytes, content_type: str) -> str:
+        """Upload file, return public URL."""
+        ...
+    async def get_url(self, bucket: str, path: str) -> str:
+        """Get public/signed URL for a file."""
+        ...
+    async def delete(self, bucket: str, path: str) -> None:
+        """Delete a file."""
+        ...
+
+# Implementations: SupabaseStorage (default), S3Storage, LocalStorage
+# Configured in app/config.py, injected via FastAPI dependency
+
+# app/core/auth_verifier.py — External Auth Token Verification
+class AuthVerifier(Protocol):
+    async def verify_token(self, token: str) -> dict:
+        """Verify external auth token, return user info (sub, email, phone)."""
+        ...
+
+# Implementations: SupabaseAuthVerifier (default), FirebaseAuthVerifier, OIDCVerifier
+# Only used during register/login to verify the external provider's token
+# After verification, our own JWT is issued — all subsequent requests use our JWT
+```
+
+**What this enables:**
+- Switch from Supabase Storage to AWS S3: implement `S3Storage`, change one config line
+- Switch from Supabase Auth to Firebase: implement `FirebaseAuthVerifier`, change one config line
+- Database is already provider-agnostic (SQLAlchemy ORM + `DATABASE_URL` connection string)
+
+### 9. Timezone: Store UTC, Display BST (Asia/Dhaka)
+
+The project targets Dhaka, Bangladesh (GMT+6 / BST). Timezone strategy:
+
+```
+Database:   TIMESTAMPTZ — stores everything in UTC internally
+Backend:    Always use datetime.now(timezone.utc) when creating timestamps
+            Never use datetime.now() (naive) or hardcode offsets
+API:        Return ISO 8601 strings in UTC (with Z suffix): "2026-03-02T10:30:00Z"
+Frontend:   Convert to Asia/Dhaka (BST) for display using Intl.DateTimeFormat
+```
+
+```python
+# Backend — always UTC
+from datetime import datetime, timezone
+now = datetime.now(timezone.utc)  # CORRECT
+now = datetime.now()              # WRONG — naive datetime
+
+# API responses — UTC ISO 8601
+# "2026-03-02T10:30:00Z" (UTC) → frontend converts to "2026-03-02T16:30:00+06:00" (BST)
+```
+
+```typescript
+// Frontend — display in Dhaka timezone
+const formatDate = (utcString: string) =>
+  new Intl.DateTimeFormat('bn-BD', {
+    timeZone: 'Asia/Dhaka',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(utcString));
+
+// "2026-03-02T10:30:00Z" → "২ মার্চ, ২০২৬, ৪:৩০ PM"
+```
+
+**Why UTC in DB, not GMT+6:**
+- Bangladesh does not observe DST, so GMT+6 is constant — but UTC is the universal standard for storage
+- If the platform ever expands beyond Dhaka, UTC works everywhere
+- PostgreSQL TIMESTAMPTZ already handles this correctly — it stores UTC and converts on read
+- All third-party APIs (bKash, Nagad) use UTC timestamps
+
+### 10. API URL Structure
 
 ```
 /api/v1/auth/...                    → Authentication
@@ -195,6 +273,83 @@ Same pattern for: Shop status, Payment status, Refund status, Payout status. Def
 
 ---
 
+## Coding Standards (MUST Follow)
+
+### 1. Clean, Modular, Reusable Code
+
+Follow developer best practices for FastAPI and Next.js. Keep code clean, modular, and reusable:
+
+- **Backend**: Use FastAPI's dependency injection, Pydantic models for validation, proper HTTP status codes, and structured error responses. One router per domain, one service per domain.
+- **Frontend**: Use Next.js App Router conventions — server components by default, client components only when needed. Colocate components with their pages. Use TypeScript strictly (no `any`).
+- **Both**: Small, focused functions that do one thing. Clear naming that reflects intent.
+
+### 2. Simplicity First (DRY, KISS, YAGNI)
+
+Keep implementations simple so any new developer can understand the codebase quickly:
+
+- **DRY** — Don't Repeat Yourself. If the same logic appears twice, extract it.
+- **KISS** — Keep It Simple, Stupid. Prefer straightforward solutions over clever ones.
+- **YAGNI** — You Aren't Gonna Need It. Don't build for hypothetical future requirements.
+- No unnecessary abstractions. Three similar lines are better than a premature helper.
+- Flat is better than nested. Avoid deeply nested if/else or try/except blocks.
+
+### 3. Docstrings on All Functions
+
+Every Python function and TypeScript function must have a brief docstring explaining:
+
+```python
+async def get_products_by_shop(
+    db: AsyncSession, shop_id: UUID, skip: int = 0, limit: int = 20
+) -> list[Product]:
+    """Fetch active products for a shop with pagination.
+
+    Args:
+        db: Async database session.
+        shop_id: UUID of the shop to filter by.
+        skip: Number of records to skip (offset).
+        limit: Max number of records to return.
+
+    Returns:
+        list[Product]: List of non-deleted products for the shop.
+    """
+```
+
+Keep docstrings concise — what the function does, its parameters with types, and what it returns. No filler text.
+
+### 4. Optimal DB Queries — Bulk Over Loops
+
+Never loop to create/update rows one at a time. Use bulk operations:
+
+```python
+# CORRECT — bulk insert
+db.add_all([
+    ProductVariant(product_id=pid, sku=v.sku, price=v.price)
+    for v in variants_data
+])
+await db.commit()
+
+# WRONG — N+1 inserts in a loop
+for v in variants_data:
+    variant = ProductVariant(product_id=pid, sku=v.sku, price=v.price)
+    db.add(variant)
+    await db.commit()  # commits inside loop = slow
+```
+
+Also: use `selectinload`/`joinedload` to avoid N+1 SELECT queries. Commit once per operation, not per row.
+
+### 5. Shared Utilities in utils
+
+Place reusable helper functions in `app/utils/` (backend) or `src/lib/utils/` (frontend):
+
+- `app/utils/pagination.py` — Shared pagination logic
+- `app/utils/validators.py` — Phone number, slug, BDT amount validators
+- `app/utils/bd_payments.py` — bKash/Nagad API clients (already planned)
+- `src/lib/utils/format.ts` — Date, currency, phone formatting helpers
+
+If a helper is used by only one service, keep it in that service. Move to utils only when it's needed in 2+ places.
+
+---
+
 ## Backend Build Order (Follow This Sequence)
 
 ### Phase 1: Foundation (Do This First)
@@ -203,48 +358,50 @@ Same pattern for: Shop status, Payment status, Refund status, Payout status. Def
 3. `app/db/base.py` — SQLAlchemy Base with TimestampMixin, SoftDeleteMixin
 4. `app/models/` — ALL SQLAlchemy models (must match schema.sql exactly)
 5. `app/main.py` — FastAPI app with CORS, lifespan, error handlers
+6. `app/core/storage.py` — StorageBackend protocol + SupabaseStorage implementation (vendor-agnostic file storage)
+7. `app/core/auth_verifier.py` — AuthVerifier protocol + SupabaseAuthVerifier implementation (vendor-agnostic token verification)
 
 ### Phase 2: Auth
-6. `app/core/security.py` — JWT creation/verification, bcrypt hashing
-7. `app/schemas/user.py` — UserCreate, UserRead, TokenPair
-8. `app/services/auth_service.py` — Register, login, OTP, session management
-9. `app/api/v1/auth.py` — Auth routes
-10. `app/dependencies.py` — get_current_user, get_current_shop
+8. `app/core/security.py` — JWT creation/verification, bcrypt hashing
+9. `app/schemas/user.py` — UserCreate, UserRead, TokenPair
+10. `app/services/auth_service.py` — Register, login, OTP, session management (uses AuthVerifier protocol)
+11. `app/api/v1/auth.py` — Auth routes
+12. `app/dependencies.py` — get_current_user, get_current_shop
 
 ### Phase 3: Shop & Products
-11. `app/schemas/shop.py`, `app/schemas/product.py`
-12. `app/services/shop_service.py` — Shop CRUD, config, staff
-13. `app/services/product_service.py` — Product/variant CRUD, media upload, price sync
-14. `app/api/v1/shops.py`, `app/api/v1/products.py`, `app/api/v1/categories.py`
+13. `app/schemas/shop.py`, `app/schemas/product.py`
+14. `app/services/shop_service.py` — Shop CRUD, config, staff
+15. `app/services/product_service.py` — Product/variant CRUD, media upload via StorageBackend, price sync
+16. `app/api/v1/shops.py`, `app/api/v1/products.py`, `app/api/v1/categories.py`
 
 ### Phase 4: Cart & Orders
-15. `app/schemas/cart.py`, `app/schemas/order.py`
-16. `app/services/cart_service.py` — Add/remove, guest merge, stock check
-17. `app/services/order_service.py` — Cart→Order conversion, snapshots, status machine
-18. `app/api/v1/cart.py`, `app/api/v1/orders.py`
+17. `app/schemas/cart.py`, `app/schemas/order.py`
+18. `app/services/cart_service.py` — Add/remove, guest merge, stock check
+19. `app/services/order_service.py` — Cart→Order conversion, snapshots, status machine
+20. `app/api/v1/cart.py`, `app/api/v1/orders.py`
 
 ### Phase 5: Payments
-19. `app/schemas/payment.py`
-20. `app/utils/bd_payments.py` — bKash/Nagad API clients
-21. `app/services/payment_service.py` — Payment creation, webhook handling
-22. `app/api/v1/payments.py`, `app/api/webhooks/bkash.py`
+21. `app/schemas/payment.py`
+22. `app/utils/bd_payments.py` — bKash/Nagad API clients
+23. `app/services/payment_service.py` — Payment creation, webhook handling
+24. `app/api/v1/payments.py`, `app/api/webhooks/bkash.py`
 
 ### Phase 6: Everything Else
-23. Coupons (service + routes)
-24. Reviews (service + routes)
-25. Refunds (service + routes)
-26. Notifications (service + routes)
-27. Addresses, Wishlist, Followers (simple CRUD)
-28. Admin endpoints
-29. Bulk import/export
-30. Payouts
+25. Coupons (service + routes)
+26. Reviews (service + routes)
+27. Refunds (service + routes)
+28. Notifications (service + routes)
+29. Addresses, Wishlist, Followers (simple CRUD)
+30. Admin endpoints
+31. Bulk import/export
+32. Payouts
 
 ---
 
 ## Frontend Build Order (Follow This Sequence)
 
 ### Phase 1: Foundation
-1. Next.js project with App Router, TypeScript, Tailwind, shadcn/ui
+1. Next.js 16 project with App Router, TypeScript, Tailwind, shadcn/ui
 2. `src/lib/supabase/` — Client and server Supabase instances
 3. `src/lib/api/client.ts` — Axios wrapper for FastAPI
 4. `src/providers/` — Auth, Query, Toast providers
@@ -432,7 +589,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 2. **UUID Primary Keys.** Use `uuid.uuid4()` in Python, `uuid_generate_v4()` in SQL. SQLAlchemy: `Column(UUID, primary_key=True, default=uuid.uuid4)`.
 
-3. **TIMESTAMPTZ vs TIMESTAMP.** The schema uses `TIMESTAMPTZ` everywhere. In Python, always use `datetime.now(timezone.utc)`, never `datetime.now()`.
+3. **TIMESTAMPTZ vs TIMESTAMP.** The schema uses `TIMESTAMPTZ` everywhere. Store UTC, display as Asia/Dhaka (BST, GMT+6). In Python, always use `datetime.now(timezone.utc)`, never `datetime.now()`. Frontend converts to BST for display via `Intl.DateTimeFormat` with `timeZone: 'Asia/Dhaka'`.
 
 4. **Decimal for money.** Never use `float`. In Python: `from decimal import Decimal`. In SQLAlchemy: `Column(Numeric(12, 2))`. In Pydantic: `condecimal(max_digits=12, decimal_places=2)`.
 

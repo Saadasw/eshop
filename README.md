@@ -1,4 +1,4 @@
-# 🏪 Khilgaon E-Shop Platform
+# 🏪 E-Shop Platform
 
 Multi-tenant e-commerce platform for local shops in Khilgaon, Dhaka. Each shop gets a branded online store with product management, order processing, and Bangladesh payment gateway integration (bKash, Nagad, Rocket, COD).
 
@@ -14,7 +14,7 @@ Multi-tenant e-commerce platform for local shops in Khilgaon, Dhaka. Each shop g
 ```bash
 # 1. Clone and enter
 git clone <repo-url>
-cd khilgaon-eshop
+cd eshop
 
 # 2. Setup Supabase
 #    - Create project at supabase.com
