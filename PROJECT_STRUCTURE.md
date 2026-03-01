@@ -1,8 +1,8 @@
 
-# Khilgaon E-Shop — Project Structure
+# E-Shop — Project Structure
 
 ```
-khilgaon-eshop/                          ← Root (git init here, open in Claude Code)
+eshop/                                    ← Root (git init here, open in Claude Code)
 │
 ├── .git/                                 ← Git repo root
 ├── .gitignore

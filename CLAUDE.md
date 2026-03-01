@@ -1,5 +1,5 @@
 
-# CLAUDE.md — Khilgaon E-Shop Platform
+# CLAUDE.md — E-Shop Platform
 
 ## What This Project Is
 
