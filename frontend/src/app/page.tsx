@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
@@ -7,7 +8,14 @@ export default function Home() {
       <p className="max-w-md text-center text-lg text-muted-foreground">
         Multi-tenant e-commerce platform for local Bangladeshi shops.
       </p>
-      <Button size="lg">Get Started</Button>
+      <div className="flex gap-3">
+        <Button size="lg" asChild>
+          <Link href="/login">Login</Link>
+        </Button>
+        <Button size="lg" variant="outline" asChild>
+          <Link href="/register">Register</Link>
+        </Button>
+      </div>
     </div>
   );
 }
