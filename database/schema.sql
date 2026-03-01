@@ -1,5 +1,5 @@
 -- ============================================================================
--- KHILGAON E-SHOP PLATFORM — COMPLETE POSTGRESQL SCHEMA v4.0
+-- E-SHOP PLATFORM — COMPLETE POSTGRESQL SCHEMA v4.0
 -- ============================================================================
 -- Generated: 2026-02-28
 -- Database: PostgreSQL 16+
@@ -7,8 +7,8 @@
 -- Entities: 45 (42 hot + 3 archive)
 -- 
 -- USAGE:
---   createdb khilgaon_eshop
---   psql -d khilgaon_eshop -f khilgaon_eshop_schema.sql
+--   createdb eshop
+--   psql -d eshop -f eshop_schema.sql
 --
 -- This file is idempotent — safe to run multiple times.
 -- ============================================================================
@@ -1257,7 +1257,7 @@ CREATE POLICY shop_isolation_delivery_zone ON delivery_zone
 --   Seed data:       10 platform settings
 --
 -- Next: Run this file against a fresh PostgreSQL 16+ database.
---   createdb khilgaon_eshop
---   psql -d khilgaon_eshop -f khilgaon_eshop_schema.sql
+--   createdb eshop
+--   psql -d eshop -f eshop_schema.sql
 --
 -- ============================================================================

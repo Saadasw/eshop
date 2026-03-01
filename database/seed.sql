@@ -1,5 +1,5 @@
 -- ============================================================================
--- KHILGAON E-SHOP — SEED DATA FOR DEVELOPMENT
+-- E-SHOP — SEED DATA FOR DEVELOPMENT
 -- ============================================================================
 -- Run AFTER schema.sql
 -- Creates: 2 users, 1 shop, categories, products with variants, test orders
@@ -14,7 +14,7 @@ INSERT INTO "user" (user_id, full_name, email, phone, password_hash, primary_rol
 VALUES (
     'a0000000-0000-0000-0000-000000000001',
     'Platform Admin',
-    'admin@khilgaon-eshop.com',
+    'admin@eshop.com',
     '01700000001',
     '$2b$12$LJ3m4ys6Zz0rVxQpYvHFqOQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQ',  -- bcrypt hash of "admin123"
     'admin',
