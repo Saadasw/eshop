@@ -386,15 +386,40 @@ If a helper is used by only one service, keep it in that service. Move to utils 
 23. `app/services/payment_service.py` — Payment creation, webhook handling
 24. `app/api/v1/payments.py`, `app/api/webhooks/bkash.py`
 
-### Phase 6: Everything Else
-25. Coupons (service + routes)
-26. Reviews (service + routes)
-27. Refunds (service + routes)
-28. Notifications (service + routes)
-29. Addresses, Wishlist, Followers (simple CRUD)
-30. Admin endpoints
-31. Bulk import/export
-32. Payouts
+### Phase 6A: Coupons & Reviews
+25. `app/schemas/coupon.py` — CouponCreate (code, discount_type, discount_value, min_order_amount, max_discount_amount, max_usage, max_usage_per_user, applies_to, target_category_id, target_product_id, valid_from, valid_until), CouponRead, CouponUpdate, CouponUsageRead
+26. `app/services/coupon_service.py` — Create/list/update/soft-delete coupons (scoped by shop_id). Validate coupon (active, within date range, usage limits, min order amount, scope match). Apply coupon to order (create CouponUsage record — trigger auto-increments times_used). Unique constraint: (shop_id, code).
+27. `app/api/v1/coupons.py` — Routes: POST/GET/PATCH/DELETE `/shops/{slug}/coupons`, POST `/shops/{slug}/coupons/validate` (check if coupon is applicable for a cart)
+28. `app/schemas/review.py` — ReviewCreate (rating 1-5, comment, is_anonymous), ReviewRead, ReviewReply (shop_reply text). Unique constraint: (customer_id, product_id, order_id).
+29. `app/services/review_service.py` — Create review (must have completed order for product), list by product (paginated, visible only), shop reply. DB trigger handles avg_rating/review_count sync.
+30. `app/api/v1/reviews.py` — Routes: POST `/shops/{slug}/products/{id}/reviews`, GET `/shops/{slug}/products/{id}/reviews`, POST `/shops/{slug}/reviews/{id}/reply` (owner/staff), DELETE `/shops/{slug}/reviews/{id}` (soft delete, owner/staff)
+
+### Phase 6B: Refunds & Payouts
+31. `app/schemas/refund.py` — RefundRequest (order_id, reason, items with quantities), RefundRead, RefundItemRead. State machine: requested→approved→processing→completed|failed|rejected.
+32. `app/services/refund_service.py` — Request refund (customer), approve/reject (owner/staff), process (mark completed/failed), restock items if restocked=true. Uses VALID_REFUND_TRANSITIONS from state_machines.py.
+33. `app/api/v1/refunds.py` — Routes: POST `/orders/{id}/refund` (customer), GET/PATCH `/shops/{slug}/refunds` (owner/staff manage)
+34. `app/schemas/payout.py` — PayoutRead, PayoutCreate (admin only). State machine: pending→processing→completed|failed.
+35. `app/services/payout_service.py` — Calculate payout for a period (sum order totals - commissions - refund deductions), create payout record, update status. Uses VALID_PAYOUT_TRANSITIONS.
+36. `app/api/v1/payouts.py` — Routes: GET `/shops/{slug}/payouts` (owner), POST/PATCH `/admin/payouts` (admin)
+
+### Phase 6C: Notifications & Addresses & Wishlist
+37. `app/schemas/notification.py` — NotificationRead, NotificationMarkRead
+38. `app/services/notification_service.py` — Create notification (internal helper called by other services on events), list for user (paginated, unread count), mark read, mark all read. Notifications are created by: order placement, status change, low stock, new review, refund update, payout completed.
+39. `app/api/v1/notifications.py` — Routes: GET `/notifications` (user), PATCH `/notifications/{id}/read`, POST `/notifications/mark-all-read`
+40. `app/schemas/address.py` — CustomerAddressCreate, CustomerAddressRead, CustomerAddressUpdate. Validate BD phone. Soft delete (deleted_at only, no deleted_by).
+41. `app/services/address_service.py` — CRUD for customer addresses. When setting is_default=true, unset other defaults for the user.
+42. `app/api/v1/addresses.py` — Routes: POST/GET/PATCH/DELETE `/addresses` (user's own)
+43. `app/schemas/wishlist.py` — WishlistItemRead (product info denormalized)
+44. `app/services/wishlist_service.py` — Add/remove/list wishlist items. Unique constraint: (user_id, product_id).
+45. `app/api/v1/wishlist.py` — Routes: POST/GET/DELETE `/wishlist`
+
+### Phase 6D: Admin & Bulk Operations
+46. `app/schemas/admin.py` — ShopApprovalRequest (status, rejection_reason), PlatformSettingRead/Update, UserAdminRead, AuditLogRead
+47. `app/services/admin_service.py` — Approve/reject/suspend/ban shops (uses VALID_SHOP_TRANSITIONS). List/manage users (activate, deactivate, change role). CRUD for PlatformSettings. View audit logs (paginated, filterable by entity_type, action, date range).
+48. `app/api/v1/admin.py` — Routes: PATCH `/admin/shops/{id}/status`, GET/PATCH `/admin/users`, GET/PUT `/admin/settings`, GET `/admin/audit-logs`
+49. `app/schemas/bulk.py` — BulkJobCreate (type, file upload), BulkJobRead
+50. `app/services/bulk_service.py` — Create bulk job, process CSV upload (product import: parse rows, validate, bulk insert). Product export: generate CSV, upload to storage. Job status tracking. Uses StorageBackend for file handling (bucket: `bulk-imports`).
+51. `app/api/v1/bulk.py` — Routes: POST `/shops/{slug}/bulk/import`, POST `/shops/{slug}/bulk/export`, GET `/shops/{slug}/bulk/jobs`, GET `/shops/{slug}/bulk/jobs/{id}`
 
 ---
 
