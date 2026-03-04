@@ -1,6 +1,6 @@
 # Claude Guide — E-Shop Platform Status & Roadmap
 
-> **Last updated:** 2026-03-04
+> **Last updated:** 2026-03-04 (Phase 4A complete)
 > **Author:** Claude (AI Assistant)
 > **Purpose:** This document is a living conversation between Claude and you (the developer). It tells you exactly where the project stands, what's been built, what's missing, what's good, what needs fixing, and the precise path forward — phase by phase, file by file.
 
@@ -35,16 +35,16 @@
     │  FRONTEND FOUNDATION    ████████████████████████  100%   │
     │  FRONTEND AUTH          ████████████████████████  100%   │
     │  FRONTEND STOREFRONT    ████████████████████████  100%   │
-    │  FRONTEND CART+ORDERS   ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
+    │  FRONTEND CART+ORDERS   ████████████████████████  100%   │
     │  FRONTEND DASHBOARD     ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  FRONTEND ADMIN         ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  TESTING                ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     ├──────────────────────────────────────────────────────────┤
-    │  OVERALL                ██████████░░░░░░░░░░░░░░  ~42%  │
+    │  OVERALL                ████████████░░░░░░░░░░░░  ~48%  │
     └──────────────────────────────────────────────────────────┘
 ```
 
-**In plain English:** The foundation is rock-solid. Database, backend core (auth, shops, products, cart, orders), frontend auth, and the **customer storefront** (shop discovery, shop page, product detail) are all done. Customers can browse shops, view products with variants/gallery, and add to cart. What's left: cart/checkout pages, shop owner dashboard, admin panel, payments backend, and Phase 6 features. No tests exist.
+**In plain English:** The foundation is rock-solid. Database, backend core (auth, shops, products, cart, orders), frontend auth, **customer storefront**, and **cart/checkout/order pages** are all done. Customers can browse shops, view products, add to cart, checkout with COD, and view order history. What's left: shop owner dashboard, admin panel, payments backend (bKash/Nagad), and Phase 6 features. No tests exist.
 
 ---
 
@@ -144,8 +144,13 @@ frontend/src/
 │       ├── shops/page.tsx       ✅ Shop discovery page (metadata + ShopListPage)
 │       ├── [slug]/
 │       │   ├── page.tsx         ✅ Shop storefront page (passes slug to ShopStorefront)
+│       │   ├── cart/page.tsx    ✅ Cart page (passes slug to CartPage)
+│       │   ├── checkout/page.tsx ✅ Checkout page (passes slug to CheckoutPage)
 │       │   └── products/[id]/
 │       │       └── page.tsx     ✅ Product detail page (passes slug+id to ProductDetail)
+│       └── orders/
+│           ├── page.tsx         ✅ Order history page (metadata + OrderListPage)
+│           └── [id]/page.tsx    ✅ Order detail page (passes orderId to OrderDetailPage)
 │
 ├── components/
 │   ├── auth/
@@ -172,7 +177,16 @@ frontend/src/
 │   │   ├── pagination.tsx       ✅ Client — page numbers + prev/next
 │   │   ├── price-display.tsx    ✅ Price with strikethrough or range
 │   │   ├── rating-stars.tsx     ✅ 5 stars (filled/half/empty) + review count
-│   │   └── empty-state.tsx      ✅ Centered placeholder with icon + title + action
+│   │   ├── empty-state.tsx      ✅ Centered placeholder with icon + title + action
+│   │   ├── cart-item.tsx        ✅ Client — cart item row with quantity controls + remove
+│   │   ├── cart-summary.tsx     ✅ Subtotal, item count, proceed to checkout
+│   │   ├── cart-page.tsx        ✅ Client — full cart page with auth guard
+│   │   ├── checkout-page.tsx    ✅ Client — COD checkout, order summary, place order
+│   │   ├── order-status-badge.tsx ✅ Colored badge per order status
+│   │   ├── order-card.tsx       ✅ Order summary card for order list
+│   │   ├── order-timeline.tsx   ✅ Vertical status timeline with icons
+│   │   ├── order-list-page.tsx  ✅ Client — paginated order history with auth guard
+│   │   └── order-detail-page.tsx ✅ Client — items table, payment summary, timeline, cancel
 │   └── ui/
 │       ├── button.tsx           ✅ CVA variants (default, destructive, outline, etc.)
 │       ├── card.tsx             ✅ Card components
@@ -197,7 +211,8 @@ frontend/src/
 │   │   ├── shops.ts             ✅ listShops, getShop, followShop, unfollowShop
 │   │   ├── products.ts          ✅ listProducts, getProduct (with filter params)
 │   │   ├── categories.ts        ✅ listCategories
-│   │   └── cart.ts              ✅ getCart, addCartItem, updateCartItem, removeCartItem, clearCart
+│   │   ├── cart.ts              ✅ getCart, addCartItem, updateCartItem, removeCartItem, clearCart
+│   │   └── orders.ts            ✅ createOrder, listOrders, getOrder, cancelOrder
 │   ├── supabase/
 │   │   ├── client.ts            ✅ Browser Supabase client
 │   │   └── server.ts            ✅ Server Supabase client (SSR cookies)
@@ -211,7 +226,8 @@ frontend/src/
 │   ├── use-shops.ts             ✅ useShops(params?), useShop(slug)
 │   ├── use-products.ts          ✅ useProducts(slug, params?), useProduct(slug, id)
 │   ├── use-categories.ts        ✅ useCategories(slug)
-│   └── use-cart.ts              ✅ useCart, useAddToCart, useUpdateCartItem, useRemoveCartItem, useClearCart
+│   ├── use-cart.ts              ✅ useCart, useAddToCart, useUpdateCartItem, useRemoveCartItem, useClearCart
+│   └── use-orders.ts            ✅ useOrders, useOrder, useCreateOrder, useCancelOrder
 │
 ├── providers/
 │   ├── providers.tsx            ✅ Composite provider wrapper
@@ -277,8 +293,7 @@ The `/api/v1/users/me` endpoint (GET, PATCH, DELETE for the current user's profi
 | Phase | What's Needed | Pages/Components |
 |-------|---------------|-----------------|
 | ~~**Phase 3: Storefront**~~ | ~~Shop discovery, shop detail, product detail~~ | **DONE** (30 files, ~2,000 lines) |
-| **Phase 4A: Cart & Checkout** | Cart page, checkout flow, order history | ~5 pages, ~10 components |
-| **Phase 4A: API hooks** | orders.ts | ~1 API wrapper file (cart.ts already exists) |
+| ~~**Phase 4A: Cart & Checkout**~~ | ~~Cart page, checkout (COD), order history/detail~~ | **DONE** (13 new files, ~1,500 lines) |
 | **Phase 4B: Dashboard** | Shop owner dashboard with sidebar | ~11 pages, ~20 components |
 | **Phase 5: Admin** | Admin panel with sidebar | ~5 pages, ~10 components |
 
@@ -332,17 +347,11 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 ┌─────────────────────────────────────────────────────────┐
 │  ✅ DONE: Backend Phase 5 (Payments) — deferred         │
 │  ✅ DONE: Frontend Phase 3 (Customer Storefront)         │
-│  Shop discovery, shop page, product detail, add-to-cart │
+│  ✅ DONE: Frontend Phase 4A (Cart + Checkout + Orders)   │
+│  Cart page, COD checkout, order history/detail          │
 └────────────────────────┬────────────────────────────────┘
                          │
                     YOU ARE HERE
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│  NEXT UP: Frontend Phase 4A (Cart + Checkout + Orders)  │
-│  Cart page → Checkout → Order history                   │
-│  Why: The core purchase flow                            │
-└────────────────────────┬────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
@@ -428,47 +437,24 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 
 ---
 
-### Frontend Phase 4A: Cart & Checkout
+### Frontend Phase 4A: Cart & Checkout — ✅ COMPLETE
 
-**Goal:** Complete purchase flow from cart to order confirmation.
+**Status:** Done (2026-03-04). 13 new files, ~1,500 lines.
 
-**Files to create:**
+**What was built:**
+- **Routes:** `/{slug}/cart` (cart page), `/{slug}/checkout` (checkout with COD), `/orders` (order history), `/orders/{id}` (order detail)
+- **API wrapper:** `orders.ts` — createOrder, listOrders, getOrder, cancelOrder
+- **Query hook:** `use-orders.ts` — useOrders, useOrder, useCreateOrder, useCancelOrder
+- **Components (9 files):** cart-item (quantity controls + remove), cart-summary (subtotal + proceed), cart-page (auth guard + item list + clear cart), checkout-page (COD only, customer note, place order → redirect), order-status-badge (colored per status), order-card (summary for list), order-timeline (vertical status progression), order-list-page (paginated history), order-detail-page (items table + payment summary + timeline + cancel)
 
-```
-frontend/src/
-├── lib/api/
-│   ├── cart.ts                  # cartApi.get(), addItem(), updateItem(), removeItem()
-│   └── orders.ts               # orderApi.create(), list(), get()
-│
-├── app/
-│   └── shops/[slug]/
-│       ├── cart/
-│       │   └── page.tsx         # Cart page — items, quantities, coupon, total
-│       └── checkout/
-│           └── page.tsx         # Checkout — address, payment method, confirm
-│   └── orders/
-│       ├── page.tsx             # Order history (all shops)
-│       └── [id]/
-│           └── page.tsx         # Order detail — items, status timeline, payment
-│
-├── components/
-│   ├── cart/
-│   │   ├── cart-item.tsx        # Single cart item row
-│   │   ├── cart-summary.tsx     # Subtotal, delivery, discount, total
-│   │   └── coupon-input.tsx     # Apply coupon code
-│   ├── checkout/
-│   │   ├── address-selector.tsx # Pick delivery address
-│   │   ├── payment-selector.tsx # bKash / Nagad / COD selection
-│   │   └── order-confirm.tsx    # Final confirmation modal
-│   └── orders/
-│       ├── order-card.tsx       # Order summary card
-│       ├── order-timeline.tsx   # Status progression display
-│       └── order-status-badge.tsx # Colored status badge
-│
-└── hooks/
-    ├── use-cart.ts              # useCart(slug), useAddToCart(), useRemoveFromCart()
-    └── use-orders.ts            # useOrders(), useOrder(id)
-```
+**Key features:**
+- COD (Cash on Delivery) as the only payment method for now (bKash/Nagad deferred)
+- Cart page with quantity stepper, remove item, and clear cart actions
+- Checkout creates order via `POST /shops/{slug}/orders`, then redirects to order detail
+- Order detail shows items table, payment summary (subtotal/delivery/discount/tax/total), status timeline
+- Cancel button on pending/confirmed orders only
+- Auth guard on all cart/checkout/order pages
+- Navbar "My Orders" link in user dropdown
 
 ---
 
@@ -580,8 +566,8 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 
 1. ~~**Payment backend** (needed for checkout) — ~1 session~~ *deferred*
 2. ~~**Customer storefront pages** (browse shops & products) — ~2 sessions~~ **DONE**
-3. **Cart + checkout + order pages** (complete purchase flow) — ~2 sessions ← **NEXT**
-4. **Shop owner dashboard** (manage products & orders) — ~3 sessions
+3. ~~**Cart + checkout + order pages** (complete purchase flow) — ~2 sessions~~ **DONE**
+4. **Shop owner dashboard** (manage products & orders) — ~3 sessions ← **NEXT**
 5. **Coupons + reviews backend + frontend** (storefront polish) — ~2 sessions
 6. **Admin panel** (shop approval, users) — ~2 sessions
 7. **Remaining features** (refunds, notifications, wishlist, bulk, payouts) — ~3 sessions
@@ -595,17 +581,17 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 |------|----------------|-----------|----------|--------|
 | Payment backend | 6 files | ~800 | 1 | deferred |
 | ~~Customer storefront (FE)~~ | ~~20 files~~ | ~~2,500~~ | ~~2~~ | **DONE** |
-| Cart + checkout (FE) | ~12 files | ~1,500 | 2 | **NEXT** |
+| ~~Cart + checkout (FE)~~ | ~~13 files~~ | ~~1,500~~ | ~~2~~ | **DONE** |
 | Coupons + reviews (BE) | 6 files | ~640 | 1 | pending |
-| Dashboard (FE) | ~20 files | ~3,000 | 3 | pending |
+| Dashboard (FE) | ~20 files | ~3,000 | 3 | **NEXT** |
 | Phase 6B-6C (BE) | 10 files | ~1,200 | 2 | pending |
 | Phase 6B-6C (FE integration) | ~8 files | ~800 | 1 | pending |
 | Admin backend + frontend | ~10 files | ~1,500 | 2 | pending |
 | Bulk operations | 3 files | ~400 | 1 | pending |
 | Testing | ~15 files | ~2,000 | 2 | pending |
-| **Total remaining** | **~90 files** | **~12,000 lines** | **~15 sessions** | |
+| **Total remaining** | **~78 files** | **~10,500 lines** | **~13 sessions** | |
 
-**Current codebase:** ~120 files, ~12,000 lines
+**Current codebase:** ~135 files, ~13,500 lines
 **Projected final:** ~210 files, ~24,000 lines
 
 ---
@@ -658,8 +644,8 @@ I'll follow the CLAUDE.md patterns, create the files in the right order, and wir
 
 ## Final Words
 
-You've built a strong foundation and the customer storefront is live. Customers can browse shops, view products with image galleries and variants, and add items to cart. The hardest architectural decisions are made, and the frontend patterns (API wrappers → TanStack Query hooks → components → pages) are established.
+You've built a strong foundation and the full customer purchase flow is live. Customers can browse shops, view products with image galleries and variants, add items to cart, checkout with COD, and track their orders. The hardest architectural decisions are made, and the frontend patterns (API wrappers → TanStack Query hooks → components → pages) are established and proven across 40+ storefront files.
 
-**My recommendation: Build the cart & checkout pages next (Frontend Phase 4A).** The backend cart and order APIs already exist, and the cart hooks (`use-cart.ts`) are already wired up. This completes the core purchase flow — browse → add to cart → checkout → order confirmation.
+**My recommendation: Build the Shop Owner Dashboard next (Frontend Phase 4B).** Shop owners need to manage their products, process orders, and configure their store. The backend APIs for all of this already exist (shops, products, categories, orders). This is the highest-impact work remaining — without it, shop owners can't operate.
 
 Let's build.
