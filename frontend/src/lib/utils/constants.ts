@@ -15,13 +15,48 @@ export const API_ROUTES = {
     PRODUCTS: (slug: string) => `/api/v1/shops/${slug}/products`,
     PRODUCT: (slug: string, id: string) =>
       `/api/v1/shops/${slug}/products/${id}`,
+    PRODUCT_VARIANTS: (slug: string, id: string) =>
+      `/api/v1/shops/${slug}/products/${id}/variants`,
+    PRODUCT_VARIANT: (slug: string, productId: string, variantId: string) =>
+      `/api/v1/shops/${slug}/products/${productId}/variants/${variantId}`,
+    PRODUCT_MEDIA: (slug: string, id: string) =>
+      `/api/v1/shops/${slug}/products/${id}/media`,
+    PRODUCT_MEDIA_ITEM: (slug: string, productId: string, mediaId: string) =>
+      `/api/v1/shops/${slug}/products/${productId}/media/${mediaId}`,
+    PRODUCT_MEDIA_PRIMARY: (slug: string, productId: string, mediaId: string) =>
+      `/api/v1/shops/${slug}/products/${productId}/media/${mediaId}/primary`,
     CATEGORIES: (slug: string) => `/api/v1/shops/${slug}/categories`,
+    CATEGORY: (slug: string, id: string) =>
+      `/api/v1/shops/${slug}/categories/${id}`,
     CART: (slug: string) => `/api/v1/shops/${slug}/cart`,
     CART_ITEMS: (slug: string) => `/api/v1/shops/${slug}/cart/items`,
     CART_ITEM: (slug: string, itemId: string) =>
       `/api/v1/shops/${slug}/cart/items/${itemId}`,
     ORDERS: (slug: string) => `/api/v1/shops/${slug}/orders`,
+    SHOP_ORDER: (slug: string, orderId: string) =>
+      `/api/v1/shops/${slug}/orders/${orderId}`,
+    SHOP_ORDER_STATUS: (slug: string, orderId: string) =>
+      `/api/v1/shops/${slug}/orders/${orderId}/status`,
+    SHOP_ORDER_CANCEL: (slug: string, orderId: string) =>
+      `/api/v1/shops/${slug}/orders/${orderId}/cancel`,
     FOLLOW: (slug: string) => `/api/v1/shops/${slug}/follow`,
+    SETTINGS: (slug: string) => `/api/v1/shops/${slug}/settings`,
+    DELIVERY_ZONES: (slug: string) => `/api/v1/shops/${slug}/delivery-zones`,
+    DELIVERY_ZONE: (slug: string, zoneId: string) =>
+      `/api/v1/shops/${slug}/delivery-zones/${zoneId}`,
+    PAYMENT_METHODS: (slug: string) =>
+      `/api/v1/shops/${slug}/payment-methods`,
+    PAYMENT_METHOD: (slug: string, spmId: string) =>
+      `/api/v1/shops/${slug}/payment-methods/${spmId}`,
+    STAFF: (slug: string) => `/api/v1/shops/${slug}/staff`,
+    STAFF_MEMBER: (slug: string, staffId: string) =>
+      `/api/v1/shops/${slug}/staff/${staffId}`,
+    ADDRESSES: (slug: string) => `/api/v1/shops/${slug}/addresses`,
+    ADDRESS: (slug: string, addressId: string) =>
+      `/api/v1/shops/${slug}/addresses/${addressId}`,
+    ATTRIBUTES: (slug: string) => `/api/v1/shops/${slug}/attributes`,
+    ATTRIBUTE_OPTIONS: (slug: string, attrId: string) =>
+      `/api/v1/shops/${slug}/attributes/${attrId}/options`,
   },
   ORDERS: "/api/v1/orders",
   ORDER: (orderId: string) => `/api/v1/orders/${orderId}`,
@@ -46,6 +81,15 @@ export const ROUTES = {
   ORDERS: "/orders",
   ORDER_DETAIL: (orderId: string) => `/orders/${orderId}`,
   DASHBOARD: (slug: string) => `/dashboard/${slug}`,
+  DASHBOARD_ORDERS: (slug: string) => `/dashboard/${slug}/orders`,
+  DASHBOARD_ORDER_DETAIL: (slug: string, orderId: string) =>
+    `/dashboard/${slug}/orders/${orderId}`,
+  DASHBOARD_PRODUCTS: (slug: string) => `/dashboard/${slug}/products`,
+  DASHBOARD_PRODUCT_NEW: (slug: string) => `/dashboard/${slug}/products/new`,
+  DASHBOARD_PRODUCT_EDIT: (slug: string, productId: string) =>
+    `/dashboard/${slug}/products/${productId}/edit`,
+  DASHBOARD_CATEGORIES: (slug: string) => `/dashboard/${slug}/categories`,
+  DASHBOARD_SETTINGS: (slug: string) => `/dashboard/${slug}/settings`,
 } as const;
 
 /** localStorage / cookie key names for auth tokens. */

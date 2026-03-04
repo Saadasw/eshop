@@ -12,6 +12,7 @@ export interface ProductListParams {
   sort?: string;
   is_featured?: boolean;
   is_new?: boolean;
+  is_active?: boolean;
 }
 
 /** List products for a shop with filters and pagination. */

@@ -423,3 +423,206 @@ export interface OrderSummaryRead {
   item_count: number;
   ordered_at: string;
 }
+
+// --- Dashboard Mutation Types ---
+
+export interface OrderStatusUpdate {
+  status: OrderStatus;
+  description?: string | null;
+}
+
+export interface OrderCancelRequest {
+  cancel_reason?: string | null;
+}
+
+export interface ShopConfigUpdate {
+  theme_color?: string | null;
+  custom_domain?: string | null;
+  currency?: string | null;
+  order_prefix?: string | null;
+  tax_percentage?: string | null;
+  tax_inclusive?: boolean | null;
+  return_policy_days?: number | null;
+  accepting_orders?: boolean | null;
+  delivery_enabled?: boolean | null;
+  delivery_charge_type?: DeliveryChargeType | null;
+  flat_delivery_fee?: string | null;
+  min_order_amount?: string | null;
+  auto_accept_orders?: boolean | null;
+  business_hours?: Record<string, unknown> | null;
+  sms_notifications_enabled?: boolean | null;
+  email_notifications_enabled?: boolean | null;
+  push_notifications_enabled?: boolean | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+}
+
+export interface CategoryCreate {
+  name: string;
+  slug: string;
+  parent_id?: string | null;
+  icon_url?: string | null;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface CategoryUpdate {
+  name?: string | null;
+  slug?: string | null;
+  parent_id?: string | null;
+  icon_url?: string | null;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+}
+
+export interface ProductCreate {
+  sku: string;
+  name: string;
+  description?: string | null;
+  base_price: string;
+  compare_at_price?: string | null;
+  category_id?: string | null;
+  product_type?: ProductType;
+  brand?: string | null;
+  weight_grams?: number | null;
+  is_active?: boolean;
+  is_featured?: boolean;
+  tags?: string[];
+}
+
+export interface ProductUpdate {
+  sku?: string | null;
+  name?: string | null;
+  description?: string | null;
+  base_price?: string | null;
+  compare_at_price?: string | null;
+  category_id?: string | null;
+  product_type?: ProductType | null;
+  brand?: string | null;
+  weight_grams?: number | null;
+  is_active?: boolean | null;
+  is_featured?: boolean | null;
+  tags?: string[] | null;
+}
+
+export interface VariantCreate {
+  sku: string;
+  variant_name?: string | null;
+  price: string;
+  compare_at_price?: string | null;
+  stock_quantity?: number;
+  low_stock_threshold?: number;
+  track_inventory?: boolean;
+  weight_grams?: number | null;
+}
+
+export interface VariantUpdate {
+  sku?: string | null;
+  variant_name?: string | null;
+  price?: string | null;
+  compare_at_price?: string | null;
+  stock_quantity?: number | null;
+  low_stock_threshold?: number | null;
+  track_inventory?: boolean | null;
+  weight_grams?: number | null;
+  is_active?: boolean | null;
+}
+
+export interface DeliveryZoneCreate {
+  zone_name: string;
+  areas: string[];
+  delivery_fee: string;
+  estimated_time_minutes?: number | null;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface DeliveryZoneUpdate {
+  zone_name?: string | null;
+  areas?: string[] | null;
+  delivery_fee?: string | null;
+  estimated_time_minutes?: number | null;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+}
+
+export interface ShopPaymentMethodCreate {
+  method: PaymentMethod;
+  is_enabled?: boolean;
+  merchant_id?: string | null;
+  merchant_secret_enc?: string | null;
+  display_account?: string | null;
+  sort_order?: number;
+}
+
+export interface ShopPaymentMethodUpdate {
+  is_enabled?: boolean | null;
+  merchant_id?: string | null;
+  merchant_secret_enc?: string | null;
+  display_account?: string | null;
+  sort_order?: number | null;
+}
+
+export interface StaffCreate {
+  user_id: string;
+  role: StaffRole;
+  permissions?: Record<string, unknown> | null;
+}
+
+export interface StaffUpdate {
+  role?: StaffRole | null;
+  permissions?: Record<string, unknown> | null;
+  is_active?: boolean | null;
+}
+
+export interface ShopAddressCreate {
+  address_type: ShopAddressType;
+  street_address: string;
+  area: string;
+  city: string;
+  postal_code: string;
+  latitude?: string | null;
+  longitude?: string | null;
+  contact_phone?: string | null;
+  is_primary?: boolean;
+}
+
+export interface ShopAddressRead {
+  address_id: string;
+  shop_id: string;
+  address_type: ShopAddressType;
+  street_address: string;
+  area: string;
+  city: string;
+  postal_code: string;
+  latitude: string | null;
+  longitude: string | null;
+  contact_phone: string | null;
+  is_primary: boolean;
+}
+
+export interface ShopAddressUpdate {
+  address_type?: ShopAddressType | null;
+  street_address?: string | null;
+  area?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  latitude?: string | null;
+  longitude?: string | null;
+  contact_phone?: string | null;
+  is_primary?: boolean | null;
+}
+
+export interface AttributeRead {
+  attribute_id: string;
+  shop_id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface AttributeOptionRead {
+  option_id: string;
+  attribute_id: string;
+  value: string;
+  created_at: string;
+}

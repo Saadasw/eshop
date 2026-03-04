@@ -8,6 +8,7 @@ export interface ShopListParams {
   skip?: number;
   limit?: number;
   search?: string;
+  owner_id?: string;
 }
 
 /** List active shops with optional search and pagination. */

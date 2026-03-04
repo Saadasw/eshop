@@ -139,14 +139,16 @@ async def list_shops(
     skip: int = 0,
     limit: int = 20,
     status_filter: ShopStatus | None = ShopStatus.ACTIVE,
+    owner_id: uuid.UUID | None = None,
 ) -> tuple[list[Shop], int]:
-    """List shops with optional status filter and pagination.
+    """List shops with optional status filter, owner filter, and pagination.
 
     Args:
         db: Async database session.
         skip: Offset for pagination.
         limit: Max results per page.
         status_filter: Filter by shop status (default: active only).
+        owner_id: Filter by shop owner (optional).
 
     Returns:
         Tuple of (shops list, total count).
@@ -154,6 +156,8 @@ async def list_shops(
     base = select(Shop).where(Shop.deleted_at.is_(None))
     if status_filter:
         base = base.where(Shop.status == status_filter)
+    if owner_id:
+        base = base.where(Shop.owner_id == owner_id)
 
     count_result = await db.execute(
         select(func.count()).select_from(base.subquery())
@@ -261,6 +265,24 @@ async def update_config(
 # --- Shop Address ---
 
 
+async def list_addresses(
+    db: AsyncSession, shop_id: uuid.UUID
+) -> list[ShopAddress]:
+    """List all addresses for a shop.
+
+    Args:
+        db: Async database session.
+        shop_id: UUID of the shop.
+
+    Returns:
+        List of shop addresses.
+    """
+    result = await db.execute(
+        select(ShopAddress).where(ShopAddress.shop_id == shop_id)
+    )
+    return list(result.scalars().all())
+
+
 async def add_address(
     db: AsyncSession, shop_id: uuid.UUID, data: ShopAddressCreate
 ) -> ShopAddress:
@@ -336,6 +358,27 @@ async def delete_address(
 
 
 # --- Staff ---
+
+
+async def list_staff(
+    db: AsyncSession, shop_id: uuid.UUID
+) -> list[ShopStaff]:
+    """List active staff members for a shop.
+
+    Args:
+        db: Async database session.
+        shop_id: UUID of the shop.
+
+    Returns:
+        List of active (non-deleted) staff members.
+    """
+    result = await db.execute(
+        select(ShopStaff).where(
+            ShopStaff.shop_id == shop_id,
+            ShopStaff.deleted_at.is_(None),
+        )
+    )
+    return list(result.scalars().all())
 
 
 async def add_staff(
@@ -446,6 +489,26 @@ async def remove_staff(
 # --- Delivery Zone ---
 
 
+async def list_delivery_zones(
+    db: AsyncSession, shop_id: uuid.UUID
+) -> list[DeliveryZone]:
+    """List all delivery zones for a shop.
+
+    Args:
+        db: Async database session.
+        shop_id: UUID of the shop.
+
+    Returns:
+        List of delivery zones ordered by sort_order.
+    """
+    result = await db.execute(
+        select(DeliveryZone)
+        .where(DeliveryZone.shop_id == shop_id)
+        .order_by(DeliveryZone.sort_order)
+    )
+    return list(result.scalars().all())
+
+
 async def add_delivery_zone(
     db: AsyncSession, shop_id: uuid.UUID, data: DeliveryZoneCreate
 ) -> DeliveryZone:
@@ -521,6 +584,26 @@ async def delete_delivery_zone(
 
 
 # --- Payment Method ---
+
+
+async def list_payment_methods(
+    db: AsyncSession, shop_id: uuid.UUID
+) -> list[ShopPaymentMethod]:
+    """List all payment methods for a shop.
+
+    Args:
+        db: Async database session.
+        shop_id: UUID of the shop.
+
+    Returns:
+        List of payment methods ordered by sort_order.
+    """
+    result = await db.execute(
+        select(ShopPaymentMethod)
+        .where(ShopPaymentMethod.shop_id == shop_id)
+        .order_by(ShopPaymentMethod.sort_order)
+    )
+    return list(result.scalars().all())
 
 
 async def configure_payment_method(

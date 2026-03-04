@@ -57,10 +57,11 @@ async def create_shop(
 async def list_shops(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    owner_id: uuid.UUID | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse[ShopRead]:
-    """List active shops (public)."""
-    shops, total = await shop_service.list_shops(db, skip, limit)
+    """List active shops (public). Optionally filter by owner_id."""
+    shops, total = await shop_service.list_shops(db, skip, limit, owner_id=owner_id)
     return PaginatedResponse(
         items=[ShopRead.model_validate(s) for s in shops],
         total=total,
@@ -121,6 +122,18 @@ async def update_settings(
 # --- Shop Addresses ---
 
 
+@router.get("/{slug}/addresses", response_model=list[ShopAddressRead])
+async def list_addresses(
+    shop: Shop = Depends(get_current_shop),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ShopAddressRead]:
+    """List shop addresses. Owner or staff only."""
+    await shop_service.require_shop_owner_or_staff(user, shop, db)
+    addresses = await shop_service.list_addresses(db, shop.shop_id)
+    return [ShopAddressRead.model_validate(a) for a in addresses]
+
+
 @router.post(
     "/{slug}/addresses",
     response_model=ShopAddressRead,
@@ -167,6 +180,18 @@ async def delete_address(
 
 
 # --- Staff ---
+
+
+@router.get("/{slug}/staff", response_model=list[StaffRead])
+async def list_staff(
+    shop: Shop = Depends(get_current_shop),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[StaffRead]:
+    """List active staff members. Owner or staff only."""
+    await shop_service.require_shop_owner_or_staff(user, shop, db)
+    staff_list = await shop_service.list_staff(db, shop.shop_id)
+    return [StaffRead.model_validate(s) for s in staff_list]
 
 
 @router.post(
@@ -218,6 +243,18 @@ async def remove_staff(
 # --- Delivery Zones ---
 
 
+@router.get("/{slug}/delivery-zones", response_model=list[DeliveryZoneRead])
+async def list_delivery_zones(
+    shop: Shop = Depends(get_current_shop),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[DeliveryZoneRead]:
+    """List delivery zones. Owner or staff only."""
+    await shop_service.require_shop_owner_or_staff(user, shop, db)
+    zones = await shop_service.list_delivery_zones(db, shop.shop_id)
+    return [DeliveryZoneRead.model_validate(z) for z in zones]
+
+
 @router.post(
     "/{slug}/delivery-zones",
     response_model=DeliveryZoneRead,
@@ -264,6 +301,18 @@ async def delete_delivery_zone(
 
 
 # --- Payment Methods ---
+
+
+@router.get("/{slug}/payment-methods", response_model=list[ShopPaymentMethodRead])
+async def list_payment_methods(
+    shop: Shop = Depends(get_current_shop),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ShopPaymentMethodRead]:
+    """List payment methods. Owner or staff only."""
+    await shop_service.require_shop_owner_or_staff(user, shop, db)
+    methods = await shop_service.list_payment_methods(db, shop.shop_id)
+    return [ShopPaymentMethodRead.model_validate(m) for m in methods]
 
 
 @router.post(

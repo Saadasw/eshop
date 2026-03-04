@@ -4,18 +4,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Store, LogOut, User } from "lucide-react";
+import { ShoppingCart, Store, LogOut, User, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/providers/auth-provider";
 import { useCart } from "@/hooks/use-cart";
+import { useShops } from "@/hooks/use-shops";
 import { ROUTES, STATIC_PATHS } from "@/lib/utils/constants";
 
 /** Extract shop slug from pathname if the first segment is a dynamic shop route. */
@@ -34,6 +36,12 @@ export function Navbar() {
   const { user, isLoading, logout } = useAuth();
   const shopSlug = extractShopSlug(pathname);
   const { data: cart } = useCart(shopSlug ?? "");
+
+  const isOwner = user?.primary_role === "owner";
+  const { data: myShops } = useShops(
+    isOwner ? { owner_id: user.user_id, limit: 1 } : undefined,
+  );
+  const ownerShopSlug = myShops?.items?.[0]?.slug;
 
   const cartCount = shopSlug && cart ? cart.item_count : 0;
 
@@ -92,6 +100,17 @@ export function Navbar() {
                   <User className="mr-2 h-4 w-4" />
                   {user.full_name}
                 </DropdownMenuItem>
+                {ownerShopSlug && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={ROUTES.DASHBOARD(ownerShopSlug)}>
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem asChild>
                   <Link href={ROUTES.ORDERS}>My Orders</Link>
                 </DropdownMenuItem>
