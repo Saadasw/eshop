@@ -1,6 +1,6 @@
 # Claude Guide — E-Shop Platform Status & Roadmap
 
-> **Last updated:** 2026-03-02
+> **Last updated:** 2026-03-04
 > **Author:** Claude (AI Assistant)
 > **Purpose:** This document is a living conversation between Claude and you (the developer). It tells you exactly where the project stands, what's been built, what's missing, what's good, what needs fixing, and the precise path forward — phase by phase, file by file.
 
@@ -34,16 +34,17 @@
     │  BACKEND PHASE 6A-6D   ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  FRONTEND FOUNDATION    ████████████████████████  100%   │
     │  FRONTEND AUTH          ████████████████████████  100%   │
-    │  FRONTEND STOREFRONT    ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
+    │  FRONTEND STOREFRONT    ████████████████████████  100%   │
+    │  FRONTEND CART+ORDERS   ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  FRONTEND DASHBOARD     ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  FRONTEND ADMIN         ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  TESTING                ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     ├──────────────────────────────────────────────────────────┤
-    │  OVERALL                ████████░░░░░░░░░░░░░░░░  ~35%  │
+    │  OVERALL                ██████████░░░░░░░░░░░░░░  ~42%  │
     └──────────────────────────────────────────────────────────┘
 ```
 
-**In plain English:** The foundation is rock-solid. Database, backend core (auth, shops, products, cart, orders), and frontend auth are done. But the customer-facing storefront, shop owner dashboard, admin panel, payments, and all the "Phase 6" features (coupons, reviews, refunds, notifications, etc.) haven't been started yet. No tests exist.
+**In plain English:** The foundation is rock-solid. Database, backend core (auth, shops, products, cart, orders), frontend auth, and the **customer storefront** (shop discovery, shop page, product detail) are all done. Customers can browse shops, view products with variants/gallery, and add to cart. What's left: cart/checkout pages, shop owner dashboard, admin panel, payments backend, and Phase 6 features. No tests exist.
 
 ---
 
@@ -131,13 +132,20 @@ backend/app/
 frontend/src/
 ├── app/
 │   ├── layout.tsx               ✅ Root layout with Providers (Geist font)
-│   ├── page.tsx                 ✅ Simple landing with Login/Register buttons
+│   ├── page.tsx                 ✅ Landing with Browse Shops + Login/Register buttons
 │   ├── globals.css              ✅ Tailwind v4 theme (light/dark, oklch)
-│   └── (auth)/
-│       ├── layout.tsx           ✅ Centered auth layout
-│       ├── login/page.tsx       ✅ Login page (email + phone OTP tabs)
-│       ├── register/page.tsx    ✅ Registration page
-│       └── verify-otp/page.tsx  ✅ OTP verification page
+│   ├── (auth)/
+│   │   ├── layout.tsx           ✅ Centered auth layout
+│   │   ├── login/page.tsx       ✅ Login page (email + phone OTP tabs)
+│   │   ├── register/page.tsx    ✅ Registration page
+│   │   └── verify-otp/page.tsx  ✅ OTP verification page
+│   └── (storefront)/
+│       ├── layout.tsx           ✅ Navbar + main container wrapper
+│       ├── shops/page.tsx       ✅ Shop discovery page (metadata + ShopListPage)
+│       ├── [slug]/
+│       │   ├── page.tsx         ✅ Shop storefront page (passes slug to ShopStorefront)
+│       │   └── products/[id]/
+│       │       └── page.tsx     ✅ Product detail page (passes slug+id to ProductDetail)
 │
 ├── components/
 │   ├── auth/
@@ -145,28 +153,65 @@ frontend/src/
 │   │   ├── register-form.tsx    ✅ 205 lines — full registration form
 │   │   ├── otp-form.tsx         ✅ 223 lines — 6-digit OTP + resend timer
 │   │   └── auth-guard.tsx       ✅ 37 lines — protected route wrapper
+│   ├── storefront/
+│   │   ├── navbar.tsx           ✅ Top nav — logo, Browse Shops, cart badge, user dropdown
+│   │   ├── shop-card.tsx        ✅ Shop card — avatar, name, description, rating
+│   │   ├── shop-header.tsx      ✅ Shop banner + logo + name + rating
+│   │   ├── shop-list-page.tsx   ✅ Client — paginated shop grid with skeletons
+│   │   ├── shop-storefront.tsx  ✅ Client — shop page with URL-based filter state
+│   │   ├── product-card.tsx     ✅ Product card — image, name, brand, price, badges
+│   │   ├── product-grid.tsx     ✅ Responsive grid (2/3/4 cols) with empty state
+│   │   ├── product-detail.tsx   ✅ Client — gallery + variants + add-to-cart
+│   │   ├── product-filters.tsx  ✅ Orchestrates search + sort + category filter
+│   │   ├── image-gallery.tsx    ✅ Client — main image + thumbnail strip
+│   │   ├── variant-selector.tsx ✅ Client — variant pills with stock handling
+│   │   ├── add-to-cart-button.tsx ✅ Client — quantity stepper + login dialog
+│   │   ├── search-bar.tsx       ✅ Client — debounced search with clear
+│   │   ├── sort-select.tsx      ✅ Client — sort dropdown
+│   │   ├── category-filter.tsx  ✅ Client — horizontal scrollable category chips
+│   │   ├── pagination.tsx       ✅ Client — page numbers + prev/next
+│   │   ├── price-display.tsx    ✅ Price with strikethrough or range
+│   │   ├── rating-stars.tsx     ✅ 5 stars (filled/half/empty) + review count
+│   │   └── empty-state.tsx      ✅ Centered placeholder with icon + title + action
 │   └── ui/
 │       ├── button.tsx           ✅ CVA variants (default, destructive, outline, etc.)
 │       ├── card.tsx             ✅ Card components
 │       ├── input.tsx            ✅ Input with focus ring
 │       ├── label.tsx            ✅ Radix label
 │       ├── tabs.tsx             ✅ Radix tabs
-│       └── sonner.tsx           ✅ Toast notifications
+│       ├── sonner.tsx           ✅ Toast notifications
+│       ├── badge.tsx            ✅ Badge variants
+│       ├── select.tsx           ✅ Radix select dropdown
+│       ├── skeleton.tsx         ✅ Loading skeleton
+│       ├── separator.tsx        ✅ Horizontal/vertical separator
+│       ├── avatar.tsx           ✅ Avatar with fallback
+│       ├── dropdown-menu.tsx    ✅ Radix dropdown menu
+│       ├── dialog.tsx           ✅ Radix dialog/modal
+│       ├── aspect-ratio.tsx     ✅ Aspect ratio container
+│       └── scroll-area.tsx      ✅ Custom scroll area
 │
 ├── lib/
 │   ├── api/
 │   │   ├── client.ts            ✅ 116 lines — Axios + JWT auto-refresh + request queue
-│   │   └── auth.ts              ✅ 49 lines — typed auth API wrappers
+│   │   ├── auth.ts              ✅ 49 lines — typed auth API wrappers
+│   │   ├── shops.ts             ✅ listShops, getShop, followShop, unfollowShop
+│   │   ├── products.ts          ✅ listProducts, getProduct (with filter params)
+│   │   ├── categories.ts        ✅ listCategories
+│   │   └── cart.ts              ✅ getCart, addCartItem, updateCartItem, removeCartItem, clearCart
 │   ├── supabase/
 │   │   ├── client.ts            ✅ Browser Supabase client
 │   │   └── server.ts            ✅ Server Supabase client (SSR cookies)
 │   ├── utils/
-│   │   ├── constants.ts         ✅ Routes, API endpoints, BD locale config
+│   │   ├── constants.ts         ✅ Routes, API endpoints, BD locale, sort options, page size
 │   │   └── format.ts            ✅ formatDateBST, formatBDT, phone helpers
 │   └── utils.ts                 ✅ cn() utility (clsx + tailwind-merge)
 │
 ├── hooks/
-│   └── use-auth-redirect.ts     ✅ Redirect logged-in users from auth pages
+│   ├── use-auth-redirect.ts     ✅ Redirect logged-in users from auth pages
+│   ├── use-shops.ts             ✅ useShops(params?), useShop(slug)
+│   ├── use-products.ts          ✅ useProducts(slug, params?), useProduct(slug, id)
+│   ├── use-categories.ts        ✅ useCategories(slug)
+│   └── use-cart.ts              ✅ useCart, useAddToCart, useUpdateCartItem, useRemoveCartItem, useClearCart
 │
 ├── providers/
 │   ├── providers.tsx            ✅ Composite provider wrapper
@@ -227,15 +272,14 @@ frontend/src/
 
 The `/api/v1/users/me` endpoint (GET, PATCH, DELETE for the current user's profile) is not implemented. This is needed before the frontend dashboard.
 
-### 3.4 Frontend — Everything After Auth
+### 3.4 Frontend — What's Left After Storefront
 
 | Phase | What's Needed | Pages/Components |
 |-------|---------------|-----------------|
-| **Phase 3: Storefront** | Shop discovery, shop detail, product detail | ~7 pages, ~15 components |
-| **Phase 3: API hooks** | shops.ts, products.ts, categories.ts | ~3 API wrapper files |
-| **Phase 4: Cart & Orders** | Cart page, checkout flow, order history | ~5 pages, ~10 components |
-| **Phase 4: API hooks** | cart.ts, orders.ts | ~2 API wrapper files |
-| **Phase 4: Dashboard** | Shop owner dashboard with sidebar | ~11 pages, ~20 components |
+| ~~**Phase 3: Storefront**~~ | ~~Shop discovery, shop detail, product detail~~ | **DONE** (30 files, ~2,000 lines) |
+| **Phase 4A: Cart & Checkout** | Cart page, checkout flow, order history | ~5 pages, ~10 components |
+| **Phase 4A: API hooks** | orders.ts | ~1 API wrapper file (cart.ts already exists) |
+| **Phase 4B: Dashboard** | Shop owner dashboard with sidebar | ~11 pages, ~20 components |
 | **Phase 5: Admin** | Admin panel with sidebar | ~5 pages, ~10 components |
 
 ### 3.5 Testing — Zero Coverage
@@ -285,26 +329,18 @@ The `/api/v1/users/me` endpoint (GET, PATCH, DELETE for the current user's profi
 Here's the recommended build order. It follows CLAUDE.md's phased approach but prioritizes what gives you a usable product fastest.
 
 ```
-YOU ARE HERE
-     │
-     ▼
 ┌─────────────────────────────────────────────────────────┐
-│  NEXT UP: Backend Phase 5 (Payments)                    │
-│  + Backend missing endpoints (user profile, follow)     │
-│  Why: You can't have orders without payments            │
+│  ✅ DONE: Backend Phase 5 (Payments) — deferred         │
+│  ✅ DONE: Frontend Phase 3 (Customer Storefront)         │
+│  Shop discovery, shop page, product detail, add-to-cart │
 └────────────────────────┬────────────────────────────────┘
+                         │
+                    YOU ARE HERE
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Frontend Phase 3 (Customer Storefront)                 │
-│  Shop discovery → Shop page → Product detail            │
-│  Why: Customers need to browse and see products         │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│  Frontend Phase 4 (Cart + Checkout + Orders)            │
-│  Cart → Checkout → Payment → Order history              │
+│  NEXT UP: Frontend Phase 4A (Cart + Checkout + Orders)  │
+│  Cart page → Checkout → Order history                   │
 │  Why: The core purchase flow                            │
 └────────────────────────┬────────────────────────────────┘
                          │
@@ -372,52 +408,23 @@ YOU ARE HERE
 
 ---
 
-### Frontend Phase 3: Customer Storefront
+### Frontend Phase 3: Customer Storefront — ✅ COMPLETE
 
-**Goal:** Let customers browse shops and products.
+**Status:** Done (2026-03-04). 30 new files, 2 modified files, ~2,000 lines.
 
-**Files to create:**
+**What was built:**
+- **Routes:** `/shops` (shop discovery), `/{slug}` (shop storefront), `/{slug}/products/{id}` (product detail)
+- **API wrappers:** `shops.ts`, `products.ts`, `categories.ts`, `cart.ts`
+- **Query hooks:** `use-shops.ts`, `use-products.ts`, `use-categories.ts`, `use-cart.ts`
+- **Components (19 files):** navbar, shop-card, shop-header, shop-list-page, shop-storefront, product-card, product-grid, product-detail, product-filters, image-gallery, variant-selector, add-to-cart-button, search-bar, sort-select, category-filter, pagination, price-display, rating-stars, empty-state
+- **shadcn/ui:** badge, select, skeleton, separator, avatar, dropdown-menu, dialog, aspect-ratio, scroll-area
 
-```
-frontend/src/
-├── lib/api/
-│   ├── shops.ts                 # shopApi.list(), shopApi.getBySlug(), shopApi.follow()
-│   ├── products.ts              # productApi.list(), productApi.get()
-│   └── categories.ts            # categoryApi.list()
-│
-├── app/
-│   ├── shops/
-│   │   └── page.tsx             # Shop discovery — grid of active shops
-│   └── shops/[slug]/
-│       ├── page.tsx             # Shop storefront — product grid + categories
-│       └── products/[id]/
-│           └── page.tsx         # Product detail — variants, images, reviews, add-to-cart
-│
-├── components/
-│   ├── shops/
-│   │   ├── shop-card.tsx        # Shop card (logo, name, rating, category count)
-│   │   └── shop-header.tsx      # Shop storefront header (banner, info, follow btn)
-│   ├── products/
-│   │   ├── product-card.tsx     # Product card (image, name, price range, rating)
-│   │   ├── product-grid.tsx     # Responsive product grid
-│   │   ├── variant-selector.tsx # Radio/select for variant options
-│   │   ├── image-gallery.tsx    # Primary image + thumbnail strip
-│   │   ├── price-display.tsx    # ৳250 or ৳250 - ৳5,000 range
-│   │   └── add-to-cart-btn.tsx  # Add to cart with quantity selector
-│   ├── categories/
-│   │   └── category-filter.tsx  # Sidebar/top category filter
-│   └── common/
-│       ├── search-bar.tsx       # Product/shop search
-│       ├── pagination.tsx       # Page navigation
-│       ├── rating-stars.tsx     # Star rating display
-│       ├── navbar.tsx           # Customer navigation bar
-│       └── empty-state.tsx      # "No products found" placeholder
-│
-└── hooks/
-    ├── use-shops.ts             # useShops(), useShop(slug)
-    ├── use-products.ts          # useProducts(slug, filters), useProduct(slug, id)
-    └── use-categories.ts        # useCategories(slug)
-```
+**Key features:**
+- URL-based filter state (`?search=&category=&sort=&page=`) for bookmarkable/shareable links
+- Responsive grids (2/3/4 cols), horizontal category scroll on mobile
+- Navbar with contextual cart badge (shop context only), user dropdown
+- Add-to-cart shows login dialog for guests, quantity stepper for authenticated users
+- Skeleton loading states for all async content
 
 ---
 
@@ -571,9 +578,9 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 
 **MVP Build Order (fastest path to a working product):**
 
-1. **Payment backend** (needed for checkout) — ~1 session
-2. **Customer storefront pages** (browse shops & products) — ~2 sessions
-3. **Cart + checkout + order pages** (complete purchase flow) — ~2 sessions
+1. ~~**Payment backend** (needed for checkout) — ~1 session~~ *deferred*
+2. ~~**Customer storefront pages** (browse shops & products) — ~2 sessions~~ **DONE**
+3. **Cart + checkout + order pages** (complete purchase flow) — ~2 sessions ← **NEXT**
 4. **Shop owner dashboard** (manage products & orders) — ~3 sessions
 5. **Coupons + reviews backend + frontend** (storefront polish) — ~2 sessions
 6. **Admin panel** (shop approval, users) — ~2 sessions
@@ -584,22 +591,22 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 
 ## 8. Estimated Scope
 
-| Area | Files to Create | Est. Lines | Sessions |
-|------|----------------|-----------|----------|
-| Payment backend | 6 files | ~800 | 1 |
-| Customer storefront (FE) | ~20 files | ~2,500 | 2 |
-| Cart + checkout (FE) | ~12 files | ~1,500 | 2 |
-| Coupons + reviews (BE) | 6 files | ~640 | 1 |
-| Dashboard (FE) | ~20 files | ~3,000 | 3 |
-| Phase 6B-6C (BE) | 10 files | ~1,200 | 2 |
-| Phase 6B-6C (FE integration) | ~8 files | ~800 | 1 |
-| Admin backend + frontend | ~10 files | ~1,500 | 2 |
-| Bulk operations | 3 files | ~400 | 1 |
-| Testing | ~15 files | ~2,000 | 2 |
-| **Total remaining** | **~110 files** | **~14,000 lines** | **~17 sessions** |
+| Area | Files to Create | Est. Lines | Sessions | Status |
+|------|----------------|-----------|----------|--------|
+| Payment backend | 6 files | ~800 | 1 | deferred |
+| ~~Customer storefront (FE)~~ | ~~20 files~~ | ~~2,500~~ | ~~2~~ | **DONE** |
+| Cart + checkout (FE) | ~12 files | ~1,500 | 2 | **NEXT** |
+| Coupons + reviews (BE) | 6 files | ~640 | 1 | pending |
+| Dashboard (FE) | ~20 files | ~3,000 | 3 | pending |
+| Phase 6B-6C (BE) | 10 files | ~1,200 | 2 | pending |
+| Phase 6B-6C (FE integration) | ~8 files | ~800 | 1 | pending |
+| Admin backend + frontend | ~10 files | ~1,500 | 2 | pending |
+| Bulk operations | 3 files | ~400 | 1 | pending |
+| Testing | ~15 files | ~2,000 | 2 | pending |
+| **Total remaining** | **~90 files** | **~12,000 lines** | **~15 sessions** | |
 
-**Current codebase:** ~90 files, ~10,000 lines
-**Projected final:** ~200 files, ~24,000 lines
+**Current codebase:** ~120 files, ~12,000 lines
+**Projected final:** ~210 files, ~24,000 lines
 
 ---
 
@@ -651,10 +658,8 @@ I'll follow the CLAUDE.md patterns, create the files in the right order, and wir
 
 ## Final Words
 
-You've built a strong foundation — the hardest architectural decisions are already made and implemented correctly. The database schema is production-quality, the backend patterns are clean, and the auth flow works end-to-end.
+You've built a strong foundation and the customer storefront is live. Customers can browse shops, view products with image galleries and variants, and add items to cart. The hardest architectural decisions are made, and the frontend patterns (API wrappers → TanStack Query hooks → components → pages) are established.
 
-The remaining work is mostly "more of the same" — applying the established patterns to new domains (coupons, reviews, refunds, etc.) and building the frontend pages that consume them.
-
-**My recommendation: Start with the customer storefront.** It's the most visible part of the product, and the backend APIs it needs (shops, products, categories) are already done. You'll see real progress immediately.
+**My recommendation: Build the cart & checkout pages next (Frontend Phase 4A).** The backend cart and order APIs already exist, and the cart hooks (`use-cart.ts`) are already wired up. This completes the core purchase flow — browse → add to cart → checkout → order confirmation.
 
 Let's build.
