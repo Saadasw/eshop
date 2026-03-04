@@ -14,8 +14,7 @@ export function RatingStars({
   reviewCount,
   size = "sm",
 }: RatingStarsProps) {
-  const numRating =
-    typeof rating === "string" ? parseFloat(rating) : rating;
+  const numRating = typeof rating === "string" ? parseFloat(rating) : rating;
   const fullStars = Math.floor(numRating);
   const hasHalf = numRating - fullStars >= 0.5;
   const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);

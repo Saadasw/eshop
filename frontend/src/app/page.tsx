@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Store } from "lucide-react";
 
 export default function Home() {
   return (
@@ -10,6 +11,12 @@ export default function Home() {
       </p>
       <div className="flex gap-3">
         <Button size="lg" asChild>
+          <Link href="/shops">
+            <Store className="mr-2 h-5 w-5" />
+            Browse Shops
+          </Link>
+        </Button>
+        <Button size="lg" variant="outline" asChild>
           <Link href="/login">Login</Link>
         </Button>
         <Button size="lg" variant="outline" asChild>

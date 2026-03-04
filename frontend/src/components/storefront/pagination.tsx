@@ -13,7 +13,6 @@ interface PaginationProps {
 }
 
 export function Pagination({ total, skip, limit, onChange }: PaginationProps) {
-  /** Renders pagination controls. Hidden when total fits in one page. */
   if (total <= limit) return null;
 
   const currentPage = Math.floor(skip / limit) + 1;
@@ -21,7 +20,6 @@ export function Pagination({ total, skip, limit, onChange }: PaginationProps) {
   const showingFrom = skip + 1;
   const showingTo = Math.min(skip + limit, total);
 
-  /** Build visible page numbers (max 5 centered around current). */
   const getPageNumbers = (): number[] => {
     if (totalPages <= 5) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);

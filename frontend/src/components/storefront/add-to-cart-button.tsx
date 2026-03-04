@@ -29,7 +29,6 @@ export function AddToCartButton({
   variantId,
   stockQuantity,
 }: AddToCartButtonProps) {
-  /** Quantity stepper + add button. Shows login dialog if not authenticated. */
   const { user } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -69,9 +68,7 @@ export function AddToCartButton({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() =>
-              setQuantity((q) => Math.min(stockQuantity, q + 1))
-            }
+            onClick={() => setQuantity((q) => Math.min(stockQuantity, q + 1))}
             disabled={quantity >= stockQuantity}
           >
             <Plus className="h-4 w-4" />

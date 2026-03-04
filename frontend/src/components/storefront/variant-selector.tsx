@@ -42,8 +42,11 @@ export function VariantSelector({
               )}
             >
               {variant.variant_name}
-              {variant.price !== variants.find((v) => v.is_default)?.price && (
-                <span className="ml-1 text-xs">({formatBDT(variant.price)})</span>
+              {variant.price !==
+                variants.find((v) => v.is_default)?.price && (
+                <span className="ml-1 text-xs">
+                  ({formatBDT(variant.price)})
+                </span>
               )}
             </button>
           );

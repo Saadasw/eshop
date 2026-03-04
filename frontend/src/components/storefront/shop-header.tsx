@@ -9,7 +9,6 @@ interface ShopHeaderProps {
 }
 
 export function ShopHeader({ shop }: ShopHeaderProps) {
-  /** Renders the top banner and shop info section of a storefront. */
   const initials = shop.shop_name
     .split(" ")
     .map((w) => w[0])

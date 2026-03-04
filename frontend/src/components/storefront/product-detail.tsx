@@ -19,7 +19,6 @@ interface ProductDetailProps {
 }
 
 export function ProductDetail({ slug, productId }: ProductDetailProps) {
-  /** Renders full product detail with gallery, info, variants, and add-to-cart. */
   const { data: product, isLoading } = useProduct(slug, productId);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     null,

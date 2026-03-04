@@ -24,7 +24,10 @@ export async function addCartItem(
   slug: string,
   data: AddCartItemRequest,
 ): Promise<CartRead> {
-  const response = await api.post<CartRead>(API_ROUTES.SHOP.CART(slug), data);
+  const response = await api.post<CartRead>(
+    API_ROUTES.SHOP.CART_ITEMS(slug),
+    data,
+  );
   return response.data;
 }
 

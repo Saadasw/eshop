@@ -15,8 +15,7 @@ export function PriceDisplay({
   minPrice,
   maxPrice,
 }: PriceDisplayProps) {
-  const hasRange =
-    minPrice && maxPrice && minPrice !== maxPrice;
+  const hasRange = minPrice && maxPrice && minPrice !== maxPrice;
   const hasDiscount =
     compareAtPrice && parseFloat(compareAtPrice) > parseFloat(price);
 

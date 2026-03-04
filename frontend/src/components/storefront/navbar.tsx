@@ -30,7 +30,6 @@ function extractShopSlug(pathname: string): string | null {
 }
 
 export function Navbar() {
-  /** Renders the top navbar with contextual cart badge and user controls. */
   const pathname = usePathname();
   const { user, isLoading, logout } = useAuth();
   const shopSlug = extractShopSlug(pathname);
@@ -92,6 +91,9 @@ export function Navbar() {
                 <DropdownMenuItem disabled className="font-medium">
                   <User className="mr-2 h-4 w-4" />
                   {user.full_name}
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={ROUTES.ORDERS}>My Orders</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => logout()}>
                   <LogOut className="mr-2 h-4 w-4" />

@@ -1,4 +1,4 @@
-/** Product detail page — shows product info, gallery, variants, add-to-cart. */
+/** Product detail page. */
 
 import { ProductDetail } from "@/components/storefront/product-detail";
 
@@ -7,7 +7,6 @@ export default async function ProductPage({
 }: {
   params: Promise<{ slug: string; id: string }>;
 }) {
-  /** Next.js 16: params is a Promise. */
   const { slug, id } = await params;
   return <ProductDetail slug={slug} productId={id} />;
 }

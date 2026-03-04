@@ -11,7 +11,6 @@ interface ProductGridProps {
 }
 
 export function ProductGrid({ products, shopSlug }: ProductGridProps) {
-  /** Renders a responsive product grid, or an empty state if no products. */
   if (products.length === 0) {
     return (
       <EmptyState

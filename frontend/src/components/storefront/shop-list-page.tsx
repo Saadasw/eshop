@@ -27,7 +27,6 @@ function ShopCardSkeleton() {
 }
 
 export function ShopListPage() {
-  /** Renders a paginated grid of shop cards with loading skeletons. */
   const [skip, setSkip] = useState(0);
   const { data, isLoading } = useShops({ skip, limit: DEFAULT_PAGE_SIZE });
 

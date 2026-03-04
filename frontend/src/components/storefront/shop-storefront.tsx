@@ -24,7 +24,6 @@ function ShopStorefrontInner({ slug }: { slug: string }) {
   const categoryId = searchParams.get("category") ?? null;
   const skip = parseInt(searchParams.get("skip") ?? "0", 10);
 
-  /** Update URL search params without full navigation. */
   const setParam = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(updates)) {
@@ -87,9 +86,7 @@ function ShopStorefrontInner({ slug }: { slug: string }) {
         onSortChange={(v) => setParam({ sort: v, skip: null })}
         categories={categories ?? []}
         selectedCategoryId={categoryId}
-        onCategoryChange={(id) =>
-          setParam({ category: id, skip: null })
-        }
+        onCategoryChange={(id) => setParam({ category: id, skip: null })}
       />
 
       {productsLoading ? (
@@ -113,9 +110,7 @@ function ShopStorefrontInner({ slug }: { slug: string }) {
               total={productsData.total}
               skip={skip}
               limit={DEFAULT_PAGE_SIZE}
-              onChange={(newSkip) =>
-                setParam({ skip: String(newSkip) })
-              }
+              onChange={(newSkip) => setParam({ skip: String(newSkip) })}
             />
           )}
         </>
@@ -125,7 +120,6 @@ function ShopStorefrontInner({ slug }: { slug: string }) {
 }
 
 export function ShopStorefront({ slug }: { slug: string }) {
-  /** Wraps inner component in Suspense (required by useSearchParams). */
   return (
     <Suspense
       fallback={

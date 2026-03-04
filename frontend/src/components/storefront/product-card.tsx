@@ -15,7 +15,8 @@ interface ProductCardProps {
 
 export function ProductCard({ product, shopSlug }: ProductCardProps) {
   /** Renders a product card with image, name, price, rating, and badges. */
-  const primaryImage = product.media.find((m) => m.is_primary) ?? product.media[0];
+  const primaryImage =
+    product.media.find((m) => m.is_primary) ?? product.media[0];
 
   return (
     <Link href={ROUTES.PRODUCT(shopSlug, product.product_id)}>

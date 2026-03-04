@@ -17,7 +17,6 @@ export function CategoryFilter({
   selectedId,
   onSelect,
 }: CategoryFilterProps) {
-  /** Renders "All" + category chips in a horizontal scroll container. */
   if (categories.length === 0) return null;
 
   return (

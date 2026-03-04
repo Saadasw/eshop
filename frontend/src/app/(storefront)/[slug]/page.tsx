@@ -7,7 +7,6 @@ export default async function ShopPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  /** Next.js 16: params is a Promise. */
   const { slug } = await params;
   return <ShopStorefront slug={slug} />;
 }
