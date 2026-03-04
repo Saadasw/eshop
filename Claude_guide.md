@@ -1,6 +1,6 @@
 # Claude Guide — E-Shop Platform Status & Roadmap
 
-> **Last updated:** 2026-03-04 (Phase 4A complete)
+> **Last updated:** 2026-03-04 (Phase 4B complete)
 > **Author:** Claude (AI Assistant)
 > **Purpose:** This document is a living conversation between Claude and you (the developer). It tells you exactly where the project stands, what's been built, what's missing, what's good, what needs fixing, and the precise path forward — phase by phase, file by file.
 
@@ -36,15 +36,15 @@
     │  FRONTEND AUTH          ████████████████████████  100%   │
     │  FRONTEND STOREFRONT    ████████████████████████  100%   │
     │  FRONTEND CART+ORDERS   ████████████████████████  100%   │
-    │  FRONTEND DASHBOARD     ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
+    │  FRONTEND DASHBOARD     ████████████████████████  100%   │
     │  FRONTEND ADMIN         ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  TESTING                ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     ├──────────────────────────────────────────────────────────┤
-    │  OVERALL                ████████████░░░░░░░░░░░░  ~48%  │
+    │  OVERALL                ██████████████░░░░░░░░░░  ~58%  │
     └──────────────────────────────────────────────────────────┘
 ```
 
-**In plain English:** The foundation is rock-solid. Database, backend core (auth, shops, products, cart, orders), frontend auth, **customer storefront**, and **cart/checkout/order pages** are all done. Customers can browse shops, view products, add to cart, checkout with COD, and view order history. What's left: shop owner dashboard, admin panel, payments backend (bKash/Nagad), and Phase 6 features. No tests exist.
+**In plain English:** The customer-facing app and the shop owner dashboard are both complete. Database, backend core (auth, shops, products, cart, orders), frontend auth, customer storefront, cart/checkout/orders, and the **full shop owner dashboard** are all done. Customers can browse, buy, and track orders. Shop owners can manage products, process orders, handle categories, and configure settings (delivery zones, payment methods, staff). What's left: admin panel, payments backend (bKash/Nagad), and Phase 6 features (coupons, reviews, refunds, notifications, wishlist). No tests exist.
 
 ---
 
@@ -101,7 +101,7 @@ backend/app/
 │
 ├── services/                    ✅ 6 service files implemented
 │   ├── auth_service.py          ✅ 394 lines — register, login, refresh, logout, lockout
-│   ├── shop_service.py          ✅ 646 lines — CRUD, config, staff, payment methods, delivery zones
+│   ├── shop_service.py          ✅ ~720 lines — CRUD, config, staff, payment methods, delivery zones, list endpoints
 │   ├── product_service.py       ✅ 703 lines — product/variant CRUD, media upload, price sync
 │   ├── category_service.py      ✅ 175 lines — category CRUD
 │   ├── cart_service.py          ✅ 346 lines — add/remove items, stock check, guest merge
@@ -111,7 +111,7 @@ backend/app/
 │   ├── router.py                ✅ Master router
 │   └── v1/
 │       ├── auth.py              ✅ 104 lines — register, login, logout, refresh
-│       ├── shops.py             ✅ 333 lines — CRUD, config, staff, payment, delivery zones
+│       ├── shops.py             ✅ ~400 lines — CRUD, config, staff, payment, delivery zones, list endpoints
 │       ├── products.py          ✅ 298 lines — product/variant CRUD, media, attributes
 │       ├── categories.py        ✅ 85 lines — category CRUD
 │       ├── cart.py              ✅ 88 lines — cart operations
@@ -139,18 +139,33 @@ frontend/src/
 │   │   ├── login/page.tsx       ✅ Login page (email + phone OTP tabs)
 │   │   ├── register/page.tsx    ✅ Registration page
 │   │   └── verify-otp/page.tsx  ✅ OTP verification page
-│   └── (storefront)/
-│       ├── layout.tsx           ✅ Navbar + main container wrapper
-│       ├── shops/page.tsx       ✅ Shop discovery page (metadata + ShopListPage)
-│       ├── [slug]/
-│       │   ├── page.tsx         ✅ Shop storefront page (passes slug to ShopStorefront)
-│       │   ├── cart/page.tsx    ✅ Cart page (passes slug to CartPage)
-│       │   ├── checkout/page.tsx ✅ Checkout page (passes slug to CheckoutPage)
-│       │   └── products/[id]/
-│       │       └── page.tsx     ✅ Product detail page (passes slug+id to ProductDetail)
-│       └── orders/
-│           ├── page.tsx         ✅ Order history page (metadata + OrderListPage)
-│           └── [id]/page.tsx    ✅ Order detail page (passes orderId to OrderDetailPage)
+│   ├── (storefront)/
+│   │   ├── layout.tsx           ✅ Navbar + main container wrapper
+│   │   ├── shops/page.tsx       ✅ Shop discovery page (metadata + ShopListPage)
+│   │   ├── [slug]/
+│   │   │   ├── page.tsx         ✅ Shop storefront page (passes slug to ShopStorefront)
+│   │   │   ├── cart/page.tsx    ✅ Cart page (passes slug to CartPage)
+│   │   │   ├── checkout/page.tsx ✅ Checkout page (passes slug to CheckoutPage)
+│   │   │   └── products/[id]/
+│   │   │       └── page.tsx     ✅ Product detail page (passes slug+id to ProductDetail)
+│   │   └── orders/
+│   │       ├── page.tsx         ✅ Order history page (metadata + OrderListPage)
+│   │       └── [id]/page.tsx    ✅ Order detail page (passes orderId to OrderDetailPage)
+│   └── (dashboard)/
+│       └── dashboard/[slug]/
+│           ├── layout.tsx       ✅ Route group layout (DashboardShell)
+│           ├── page.tsx         ✅ Dashboard home
+│           ├── orders/
+│           │   ├── page.tsx     ✅ Order list
+│           │   └── [id]/page.tsx ✅ Order detail + status update
+│           ├── products/
+│           │   ├── page.tsx     ✅ Product list
+│           │   ├── new/page.tsx ✅ Create product
+│           │   └── [id]/edit/page.tsx ✅ Edit product + variants + media
+│           ├── categories/
+│           │   └── page.tsx     ✅ Category management
+│           └── settings/
+│               └── page.tsx     ✅ Shop settings (config, delivery, payment, staff)
 │
 ├── components/
 │   ├── auth/
@@ -187,6 +202,24 @@ frontend/src/
 │   │   ├── order-timeline.tsx   ✅ Vertical status timeline with icons
 │   │   ├── order-list-page.tsx  ✅ Client — paginated order history with auth guard
 │   │   └── order-detail-page.tsx ✅ Client — items table, payment summary, timeline, cancel
+│   ├── dashboard/
+│   │   ├── dashboard-shell.tsx        ✅ Auth guard + owner verification + sidebar + topbar + mobile hamburger
+│   │   ├── dashboard-sidebar.tsx      ✅ Nav links (Home, Orders, Products, Categories, Settings) + active state
+│   │   ├── dashboard-home.tsx         ✅ Welcome card, stats cards, quick actions, recent orders
+│   │   ├── order-list.tsx             ✅ Orders table with status filter, pagination
+│   │   ├── order-detail.tsx           ✅ Order info, items table, timeline, status update, cancel
+│   │   ├── confirm-dialog.tsx         ✅ Reusable confirmation dialog (destructive/default variants)
+│   │   ├── product-list.tsx           ✅ Products table with search, category/status filters, delete
+│   │   ├── product-form.tsx           ✅ Shared create/edit form (basic info, pricing, details, status)
+│   │   ├── product-edit.tsx           ✅ Fetches product, renders form + variants + media
+│   │   ├── variant-form-dialog.tsx    ✅ Dialog for variant CRUD (name, SKU, price, stock, weight)
+│   │   ├── media-upload-section.tsx   ✅ Image grid with upload, set primary, delete
+│   │   ├── category-list.tsx          ✅ Categories table with edit/delete dialogs
+│   │   ├── category-form-dialog.tsx   ✅ Dialog with auto-slug generation, parent select
+│   │   ├── settings-page.tsx          ✅ Tabbed settings (General, Config, Delivery, Payment, Staff)
+│   │   ├── delivery-zone-form-dialog.tsx  ✅ Zone CRUD dialog
+│   │   ├── payment-method-form-dialog.tsx ✅ Payment method config dialog
+│   │   └── staff-form-dialog.tsx      ✅ Staff management dialog
 │   └── ui/
 │       ├── button.tsx           ✅ CVA variants (default, destructive, outline, etc.)
 │       ├── card.tsx             ✅ Card components
@@ -202,23 +235,32 @@ frontend/src/
 │       ├── dropdown-menu.tsx    ✅ Radix dropdown menu
 │       ├── dialog.tsx           ✅ Radix dialog/modal
 │       ├── aspect-ratio.tsx     ✅ Aspect ratio container
-│       └── scroll-area.tsx      ✅ Custom scroll area
+│       ├── scroll-area.tsx      ✅ Custom scroll area
+│       ├── table.tsx            ✅ Data table components
+│       ├── textarea.tsx         ✅ Textarea input
+│       ├── switch.tsx           ✅ Toggle switch
+│       └── tooltip.tsx          ✅ Tooltip component
 │
 ├── lib/
 │   ├── api/
 │   │   ├── client.ts            ✅ 116 lines — Axios + JWT auto-refresh + request queue
 │   │   ├── auth.ts              ✅ 49 lines — typed auth API wrappers
-│   │   ├── shops.ts             ✅ listShops, getShop, followShop, unfollowShop
-│   │   ├── products.ts          ✅ listProducts, getProduct (with filter params)
-│   │   ├── categories.ts        ✅ listCategories
+│   │   ├── shops.ts             ✅ listShops (owner_id filter), getShop, followShop, unfollowShop
+│   │   ├── products.ts          ✅ listProducts (is_active filter), getProduct
+│   │   ├── categories.ts        ✅ listCategories (includeInactive param)
 │   │   ├── cart.ts              ✅ getCart, addCartItem, updateCartItem, removeCartItem, clearCart
-│   │   └── orders.ts            ✅ createOrder, listOrders, getOrder, cancelOrder
+│   │   ├── orders.ts            ✅ createOrder, listOrders, getOrder, cancelOrder
+│   │   ├── shop-orders.ts       ✅ listShopOrders, getShopOrder, updateOrderStatus, cancelShopOrder
+│   │   ├── dashboard-products.ts ✅ Product/variant/media CRUD (create, update, delete, upload)
+│   │   ├── dashboard-categories.ts ✅ createCategory, updateCategory, deleteCategory
+│   │   └── dashboard-settings.ts ✅ Shop config, delivery zones, payment methods, staff, addresses CRUD
 │   ├── supabase/
 │   │   ├── client.ts            ✅ Browser Supabase client
 │   │   └── server.ts            ✅ Server Supabase client (SSR cookies)
 │   ├── utils/
-│   │   ├── constants.ts         ✅ Routes, API endpoints, BD locale, sort options, page size
-│   │   └── format.ts            ✅ formatDateBST, formatBDT, phone helpers
+│   │   ├── constants.ts         ✅ Routes, API endpoints, BD locale, sort options, page size, dashboard routes
+│   │   ├── format.ts            ✅ formatDateBST, formatBDT, phone helpers
+│   │   └── slug.ts              ✅ generateSlug(name) — kebab-case slug generator
 │   └── utils.ts                 ✅ cn() utility (clsx + tailwind-merge)
 │
 ├── hooks/
@@ -227,7 +269,11 @@ frontend/src/
 │   ├── use-products.ts          ✅ useProducts(slug, params?), useProduct(slug, id)
 │   ├── use-categories.ts        ✅ useCategories(slug)
 │   ├── use-cart.ts              ✅ useCart, useAddToCart, useUpdateCartItem, useRemoveCartItem, useClearCart
-│   └── use-orders.ts            ✅ useOrders, useOrder, useCreateOrder, useCancelOrder
+│   ├── use-orders.ts            ✅ useOrders, useOrder, useCreateOrder, useCancelOrder
+│   ├── use-shop-orders.ts       ✅ useShopOrders, useShopOrder, useUpdateOrderStatus, useCancelShopOrder
+│   ├── use-dashboard-products.ts ✅ 9 mutation hooks for product/variant/media CRUD
+│   ├── use-dashboard-categories.ts ✅ useDashboardCategories, create/update/delete mutations
+│   └── use-dashboard-settings.ts ✅ 13 hooks for config, delivery zones, payment methods, staff, addresses
 │
 ├── providers/
 │   ├── providers.tsx            ✅ Composite provider wrapper
@@ -236,7 +282,7 @@ frontend/src/
 │   └── toast-provider.tsx       ✅ Sonner toaster
 │
 ├── types/
-│   └── database.ts              ✅ 426 lines — all TypeScript types
+│   └── database.ts              ✅ ~630 lines — all TypeScript types (including dashboard mutation types)
 │
 └── proxy.ts                     ✅ Next.js 16 proxy (Supabase cookie refresh)
 ```
@@ -294,7 +340,7 @@ The `/api/v1/users/me` endpoint (GET, PATCH, DELETE for the current user's profi
 |-------|---------------|-----------------|
 | ~~**Phase 3: Storefront**~~ | ~~Shop discovery, shop detail, product detail~~ | **DONE** (30 files, ~2,000 lines) |
 | ~~**Phase 4A: Cart & Checkout**~~ | ~~Cart page, checkout (COD), order history/detail~~ | **DONE** (13 new files, ~1,500 lines) |
-| **Phase 4B: Dashboard** | Shop owner dashboard with sidebar | ~11 pages, ~20 components |
+| ~~**Phase 4B: Dashboard**~~ | ~~Shop owner dashboard with sidebar~~ | **DONE** (35 new files + 4 backend, ~4,500 lines) |
 | **Phase 5: Admin** | Admin panel with sidebar | ~5 pages, ~10 components |
 
 ### 3.5 Testing — Zero Coverage
@@ -345,10 +391,11 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  ✅ DONE: Backend Phase 5 (Payments) — deferred         │
-│  ✅ DONE: Frontend Phase 3 (Customer Storefront)         │
+│  ✅ DONE: Backend Phases 1-4 (Foundation→Cart+Orders)    │
+│  ✅ DONE: Frontend Phases 1-3 (Foundation→Storefront)    │
 │  ✅ DONE: Frontend Phase 4A (Cart + Checkout + Orders)   │
-│  Cart page, COD checkout, order history/detail          │
+│  ✅ DONE: Frontend Phase 4B (Shop Owner Dashboard)       │
+│  35 new frontend files + 4 backend list endpoints       │
 └────────────────────────┬────────────────────────────────┘
                          │
                     YOU ARE HERE
@@ -356,15 +403,8 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
                          ▼
 ┌─────────────────────────────────────────────────────────┐
 │  Backend Phase 6A (Coupons + Reviews)                   │
-│  + Frontend integration                                 │
+│  + Frontend integration (dashboard + storefront)        │
 │  Why: Makes the storefront feel complete                │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│  Frontend Phase 4 (Shop Owner Dashboard)                │
-│  Dashboard home → Product mgmt → Order mgmt            │
-│  Why: Shop owners need to manage their store            │
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
@@ -379,6 +419,12 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 │  Backend Phase 6D (Admin + Bulk)                        │
 │  + Frontend Phase 5 (Admin Panel)                       │
 │  Why: Platform management — needed before launch        │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│  Backend Phase 5 (Payments — bKash/Nagad)               │
+│  Why: Currently COD only, need digital payments         │
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
@@ -473,49 +519,29 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 
 ---
 
-### Frontend Phase 4B: Shop Owner Dashboard
+### Frontend Phase 4B: Shop Owner Dashboard — ✅ COMPLETE
 
-**Goal:** Let shop owners manage their store.
+**Status:** Done (2026-03-04). 35 new frontend files + 4 backend list endpoints, ~4,500 lines.
 
-**Files to create:**
+**What was built:**
+- **Routes:** `/dashboard/{slug}` (home), `/dashboard/{slug}/orders` (list), `/dashboard/{slug}/orders/{id}` (detail), `/dashboard/{slug}/products` (list), `/dashboard/{slug}/products/new` (create), `/dashboard/{slug}/products/{id}/edit` (edit), `/dashboard/{slug}/categories`, `/dashboard/{slug}/settings`
+- **API wrappers (4 files):** `shop-orders.ts`, `dashboard-products.ts`, `dashboard-categories.ts`, `dashboard-settings.ts`
+- **Query hooks (4 files):** `use-shop-orders.ts`, `use-dashboard-products.ts`, `use-dashboard-categories.ts`, `use-dashboard-settings.ts`
+- **Components (17 files):** dashboard-shell (auth+sidebar+topbar), dashboard-sidebar, dashboard-home, order-list, order-detail, confirm-dialog, product-list, product-form, product-edit, variant-form-dialog, media-upload-section, category-list, category-form-dialog, settings-page (5 tabs), delivery-zone-form-dialog, payment-method-form-dialog, staff-form-dialog
+- **Utility:** `slug.ts` — kebab-case slug generator for categories
+- **Backend additions:** 4 GET list endpoints (addresses, staff, delivery-zones, payment-methods) + owner_id filter on list_shops
+- **shadcn/ui:** table, textarea, switch, tooltip
 
-```
-frontend/src/
-├── app/
-│   └── dashboard/
-│       ├── layout.tsx           # Dashboard layout with sidebar
-│       ├── page.tsx             # Dashboard home — sales stats, recent orders
-│       ├── products/
-│       │   ├── page.tsx         # Product list (DataTable)
-│       │   ├── new/page.tsx     # Create product form
-│       │   └── [id]/page.tsx    # Edit product form
-│       ├── orders/
-│       │   ├── page.tsx         # Order list with status filters
-│       │   └── [id]/page.tsx    # Order detail + status update
-│       ├── categories/
-│       │   └── page.tsx         # Category management
-│       ├── coupons/
-│       │   └── page.tsx         # Coupon management
-│       ├── reviews/
-│       │   └── page.tsx         # Review list + reply
-│       └── settings/
-│           └── page.tsx         # Shop config, delivery zones, payment methods, staff
-│
-├── components/
-│   ├── dashboard/
-│   │   ├── sidebar.tsx          # Dashboard sidebar navigation
-│   │   ├── stats-cards.tsx      # Revenue, orders, products summary cards
-│   │   ├── recent-orders.tsx    # Recent orders table
-│   │   └── sales-chart.tsx      # Revenue chart (optional)
-│   ├── data-table/
-│   │   ├── data-table.tsx       # Reusable data table (shadcn)
-│   │   ├── columns.tsx          # Column definitions
-│   │   └── toolbar.tsx          # Search, filter, sort controls
-│   └── forms/
-│       ├── product-form.tsx     # Product create/edit form
-│       ├── variant-form.tsx     # Variant management within product form
-│       └── category-form.tsx    # Category create/edit form
-```
+**Key features:**
+- Owner verification happens once in `dashboard-shell.tsx`, not per page
+- Order status updates with valid transition enforcement (mirrors backend state machine)
+- Product CRUD with variant management and media upload (FormData/multipart)
+- Category management with auto-slug generation from name
+- Tabbed settings page: General (name/description), Config (toggles), Delivery Zones, Payment Methods, Staff
+- Discriminated unions for type-safe create vs update forms
+- Mobile-responsive sidebar with hamburger toggle
+- Navbar "Dashboard" link for users with `primary_role === "owner"`
+- Coupon and review pages deferred (depend on Backend Phase 6A)
 
 ---
 
@@ -567,8 +593,8 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 1. ~~**Payment backend** (needed for checkout) — ~1 session~~ *deferred*
 2. ~~**Customer storefront pages** (browse shops & products) — ~2 sessions~~ **DONE**
 3. ~~**Cart + checkout + order pages** (complete purchase flow) — ~2 sessions~~ **DONE**
-4. **Shop owner dashboard** (manage products & orders) — ~3 sessions ← **NEXT**
-5. **Coupons + reviews backend + frontend** (storefront polish) — ~2 sessions
+4. ~~**Shop owner dashboard** (manage products & orders) — ~3 sessions~~ **DONE**
+5. **Coupons + reviews backend + frontend** (storefront polish) — ~2 sessions ← **NEXT**
 6. **Admin panel** (shop approval, users) — ~2 sessions
 7. **Remaining features** (refunds, notifications, wishlist, bulk, payouts) — ~3 sessions
 8. **Testing** — ~2 sessions
@@ -582,17 +608,18 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 | Payment backend | 6 files | ~800 | 1 | deferred |
 | ~~Customer storefront (FE)~~ | ~~20 files~~ | ~~2,500~~ | ~~2~~ | **DONE** |
 | ~~Cart + checkout (FE)~~ | ~~13 files~~ | ~~1,500~~ | ~~2~~ | **DONE** |
-| Coupons + reviews (BE) | 6 files | ~640 | 1 | pending |
-| Dashboard (FE) | ~20 files | ~3,000 | 3 | **NEXT** |
+| ~~Dashboard (FE + BE)~~ | ~~35+4 files~~ | ~~4,500~~ | ~~3~~ | **DONE** |
+| Coupons + reviews (BE) | 6 files | ~640 | 1 | **NEXT** |
+| Coupons + reviews (FE) | ~6 files | ~600 | 1 | pending |
 | Phase 6B-6C (BE) | 10 files | ~1,200 | 2 | pending |
 | Phase 6B-6C (FE integration) | ~8 files | ~800 | 1 | pending |
 | Admin backend + frontend | ~10 files | ~1,500 | 2 | pending |
 | Bulk operations | 3 files | ~400 | 1 | pending |
 | Testing | ~15 files | ~2,000 | 2 | pending |
-| **Total remaining** | **~78 files** | **~10,500 lines** | **~13 sessions** | |
+| **Total remaining** | **~58 files** | **~7,140 lines** | **~10 sessions** | |
 
-**Current codebase:** ~135 files, ~13,500 lines
-**Projected final:** ~210 files, ~24,000 lines
+**Current codebase:** ~170 files, ~18,000 lines
+**Projected final:** ~230 files, ~25,000 lines
 
 ---
 
@@ -644,8 +671,8 @@ I'll follow the CLAUDE.md patterns, create the files in the right order, and wir
 
 ## Final Words
 
-You've built a strong foundation and the full customer purchase flow is live. Customers can browse shops, view products with image galleries and variants, add items to cart, checkout with COD, and track their orders. The hardest architectural decisions are made, and the frontend patterns (API wrappers → TanStack Query hooks → components → pages) are established and proven across 40+ storefront files.
+Both sides of the marketplace are now functional. Customers can browse shops, view products, add to cart, checkout with COD, and track orders. Shop owners can manage products (with variants and media), process orders (with status transitions), organize categories, and configure their store (delivery zones, payment methods, staff). The codebase is at ~170 files and ~18,000 lines with consistent patterns throughout.
 
-**My recommendation: Build the Shop Owner Dashboard next (Frontend Phase 4B).** Shop owners need to manage their products, process orders, and configure their store. The backend APIs for all of this already exist (shops, products, categories, orders). This is the highest-impact work remaining — without it, shop owners can't operate.
+**My recommendation: Build Backend Phase 6A (Coupons + Reviews) next.** This adds two features that make the platform feel complete — customers can apply discount codes at checkout and leave reviews on products they've purchased. The dashboard already has placeholder spots for coupon and review management pages. After 6A, add the frontend integration (coupon validation at checkout, review display on product pages, coupon/review management in dashboard).
 
 Let's build.
