@@ -11,6 +11,8 @@ import {
   ShoppingBag,
   Package,
   FolderTree,
+  Tag,
+  Star,
   Settings,
 } from "lucide-react";
 
@@ -24,6 +26,8 @@ const NAV_ITEMS = [
   { label: "Orders", icon: ShoppingBag, href: (s: string) => ROUTES.DASHBOARD_ORDERS(s) },
   { label: "Products", icon: Package, href: (s: string) => ROUTES.DASHBOARD_PRODUCTS(s) },
   { label: "Categories", icon: FolderTree, href: (s: string) => ROUTES.DASHBOARD_CATEGORIES(s) },
+  { label: "Coupons", icon: Tag, href: (s: string) => ROUTES.DASHBOARD_COUPONS(s) },
+  { label: "Reviews", icon: Star, href: (s: string) => ROUTES.DASHBOARD_REVIEWS(s) },
   { label: "Settings", icon: Settings, href: (s: string) => ROUTES.DASHBOARD_SETTINGS(s) },
 ];
 

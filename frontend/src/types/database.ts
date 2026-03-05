@@ -613,6 +613,91 @@ export interface ShopAddressUpdate {
   is_primary?: boolean | null;
 }
 
+// --- Coupon ---
+
+export interface CouponRead {
+  coupon_id: string;
+  shop_id: string;
+  code: string;
+  discount_type: DiscountType;
+  discount_value: string;
+  min_order_amount: string | null;
+  max_discount_amount: string | null;
+  max_usage: number | null;
+  max_usage_per_user: number;
+  times_used: number;
+  applies_to: CouponScope;
+  target_category_id: string | null;
+  target_product_id: string | null;
+  is_active: boolean;
+  valid_from: string;
+  valid_until: string;
+  created_at: string;
+}
+
+export interface CouponCreate {
+  code: string;
+  discount_type: DiscountType;
+  discount_value: string;
+  min_order_amount?: string | null;
+  max_discount_amount?: string | null;
+  max_usage?: number | null;
+  max_usage_per_user?: number;
+  applies_to?: CouponScope;
+  target_category_id?: string | null;
+  target_product_id?: string | null;
+  valid_from: string;
+  valid_until: string;
+}
+
+export interface CouponUpdate {
+  discount_value?: string | null;
+  min_order_amount?: string | null;
+  max_discount_amount?: string | null;
+  max_usage?: number | null;
+  max_usage_per_user?: number | null;
+  is_active?: boolean | null;
+  valid_from?: string | null;
+  valid_until?: string | null;
+}
+
+export interface CouponValidateResponse {
+  valid: boolean;
+  coupon: CouponRead | null;
+  discount_amount: string;
+  message: string;
+}
+
+// --- Review ---
+
+export interface ReviewRead {
+  review_id: string;
+  product_id: string;
+  customer_id: string;
+  order_id: string;
+  rating: number;
+  comment: string | null;
+  shop_reply: string | null;
+  replied_at: string | null;
+  is_anonymous: boolean;
+  is_refunded_order: boolean;
+  customer_name: string | null;
+  created_at: string;
+}
+
+export interface ReviewCreate {
+  order_id: string;
+  rating: number;
+  comment?: string | null;
+  is_anonymous?: boolean;
+}
+
+export interface ReviewReply {
+  shop_reply: string;
+}
+
+// --- Attribute ---
+
 export interface AttributeRead {
   attribute_id: string;
   shop_id: string;

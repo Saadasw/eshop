@@ -13,10 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CouponInput } from "./coupon-input";
 import { EmptyState } from "./empty-state";
 import { formatBDT } from "@/lib/utils/format";
 import { ROUTES } from "@/lib/utils/constants";
 import { ShoppingCart, ArrowLeft } from "lucide-react";
+import type { CouponValidateResponse } from "@/types/database";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -31,12 +33,30 @@ export function CheckoutPage({ slug }: CheckoutPageProps) {
   const { data: cart, isLoading: cartLoading } = useCart(slug);
   const createOrder = useCreateOrder(slug);
   const [customerNote, setCustomerNote] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discount: string;
+  } | null>(null);
+
+  const handleCouponApply = (result: CouponValidateResponse) => {
+    if (result.valid && result.coupon) {
+      setAppliedCoupon({
+        code: result.coupon.code,
+        discount: result.discount_amount,
+      });
+    }
+  };
+
+  const handleCouponRemove = () => {
+    setAppliedCoupon(null);
+  };
 
   const handlePlaceOrder = () => {
     createOrder.mutate(
       {
         fulfillment_type: "delivery",
         customer_note: customerNote || null,
+        coupon_code: appliedCoupon?.code ?? null,
       },
       {
         onSuccess: (order) => {
@@ -157,6 +177,21 @@ export function CheckoutPage({ slug }: CheckoutPageProps) {
             </CardContent>
           </Card>
 
+          {/* Coupon Code */}
+          <Card>
+            <CardContent className="p-4">
+              <h2 className="font-semibold mb-3">Coupon Code</h2>
+              <CouponInput
+                slug={slug}
+                cartSubtotal={cart.subtotal}
+                onApply={handleCouponApply}
+                onRemove={handleCouponRemove}
+                appliedCode={appliedCoupon?.code ?? null}
+                discountAmount={appliedCoupon?.discount ?? null}
+              />
+            </CardContent>
+          </Card>
+
           {/* Customer Note */}
           <Card>
             <CardContent className="p-4">
@@ -183,6 +218,12 @@ export function CheckoutPage({ slug }: CheckoutPageProps) {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>{formatBDT(cart.subtotal)}</span>
                 </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount ({appliedCoupon.code})</span>
+                    <span>-{formatBDT(appliedCoupon.discount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Delivery</span>
                   <span className="text-muted-foreground">
@@ -193,7 +234,17 @@ export function CheckoutPage({ slug }: CheckoutPageProps) {
               <Separator className="my-3" />
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span>{formatBDT(cart.subtotal)}</span>
+                <span>
+                  {formatBDT(
+                    appliedCoupon
+                      ? Math.max(
+                          0,
+                          parseFloat(cart.subtotal) -
+                            parseFloat(appliedCoupon.discount),
+                        )
+                      : cart.subtotal,
+                  )}
+                </span>
               </div>
               <Button
                 onClick={handlePlaceOrder}

@@ -9,6 +9,7 @@ import { PriceDisplay } from "./price-display";
 import { RatingStars } from "./rating-stars";
 import { VariantSelector } from "./variant-selector";
 import { AddToCartButton } from "./add-to-cart-button";
+import { ProductReviews } from "./product-reviews";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -125,6 +126,15 @@ export function ProductDetail({ slug, productId }: ProductDetailProps) {
           shopSlug={slug}
           variantId={activeVariant?.variant_id ?? ""}
           stockQuantity={activeVariant?.stock_quantity ?? 0}
+        />
+      </div>
+
+      <div className="md:col-span-2 mt-8">
+        <ProductReviews
+          slug={slug}
+          productId={productId}
+          reviewCount={product.review_count}
+          avgRating={product.avg_rating}
         />
       </div>
     </div>
