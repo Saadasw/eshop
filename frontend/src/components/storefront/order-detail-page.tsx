@@ -5,6 +5,7 @@
 import { useOrder, useCancelOrder } from "@/hooks/use-orders";
 import { OrderStatusBadge } from "./order-status-badge";
 import { OrderTimeline } from "./order-timeline";
+import { RefundDialog } from "./refund-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -56,6 +57,7 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
   }
 
   const canCancel = ["pending", "confirmed"].includes(order.status);
+  const canRefund = ["delivered", "shipped"].includes(order.status);
 
   return (
     <div className="space-y-6">
@@ -180,6 +182,8 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
               </CardContent>
             </Card>
           )}
+
+          {canRefund && <RefundDialog order={order} />}
 
           {canCancel && (
             <Button

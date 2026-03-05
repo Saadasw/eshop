@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Store, LogOut, User, LayoutDashboard } from "lucide-react";
+import { ShoppingCart, Store, LogOut, User, LayoutDashboard, Heart, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/providers/auth-provider";
 import { useCart } from "@/hooks/use-cart";
 import { useShops } from "@/hooks/use-shops";
+import { NotificationBell } from "./notification-bell";
 import { ROUTES, STATIC_PATHS } from "@/lib/utils/constants";
 
 /** Extract shop slug from pathname if the first segment is a dynamic shop route. */
@@ -84,6 +85,8 @@ export function Navbar() {
             </Button>
           )}
 
+          {user && <NotificationBell />}
+
           {isLoading ? null : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -114,6 +117,19 @@ export function Navbar() {
                 <DropdownMenuItem asChild>
                   <Link href={ROUTES.ORDERS}>My Orders</Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={ROUTES.WISHLIST}>
+                    <Heart className="mr-2 h-4 w-4" />
+                    Wishlist
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={ROUTES.ADDRESSES}>
+                    <MapPin className="mr-2 h-4 w-4" />
+                    Addresses
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => logout()}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout

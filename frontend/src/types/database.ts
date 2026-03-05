@@ -711,3 +711,160 @@ export interface AttributeOptionRead {
   value: string;
   created_at: string;
 }
+
+// --- Refund ---
+
+export interface RefundItemRequest {
+  order_item_id: string;
+  quantity: number;
+}
+
+export interface RefundRequest {
+  reason: string;
+  type?: RefundType;
+  items: RefundItemRequest[];
+}
+
+export interface RefundStatusUpdate {
+  status: RefundStatus;
+  admin_note?: string | null;
+  restock?: boolean;
+}
+
+export interface RefundItemRead {
+  refund_item_id: string;
+  order_item_id: string;
+  quantity: number;
+  amount: string;
+  restocked: boolean;
+}
+
+export interface RefundRead {
+  refund_id: string;
+  order_id: string;
+  payment_id: string | null;
+  requested_by: string;
+  processed_by: string | null;
+  type: RefundType;
+  amount: string;
+  reason: string;
+  status: RefundStatus;
+  admin_note: string | null;
+  gateway_refund_id: string | null;
+  items: RefundItemRead[];
+  created_at: string;
+  updated_at: string;
+  processed_at: string | null;
+  completed_at: string | null;
+}
+
+// --- Payout ---
+
+export interface PayoutRead {
+  payout_id: string;
+  shop_id: string;
+  period_start: string;
+  period_end: string;
+  order_count: number;
+  gross_amount: string;
+  commission_rate: string;
+  commission_amount: string;
+  refund_deductions: string;
+  net_amount: string;
+  status: PayoutStatus;
+  payout_method: PayoutMethod;
+  transaction_reference: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  processed_at: string | null;
+}
+
+// --- Notification ---
+
+export interface NotificationRead {
+  notification_id: string;
+  user_id: string;
+  shop_id: string | null;
+  reference_id: string | null;
+  reference_type: string | null;
+  type: NotificationType;
+  channel: NotificationChannel;
+  title: string;
+  message: string;
+  action_url: string | null;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+  expires_at: string | null;
+}
+
+export interface UnreadCountResponse {
+  count: number;
+}
+
+// --- Customer Address ---
+
+export interface CustomerAddressCreate {
+  label?: string | null;
+  recipient_name: string;
+  phone: string;
+  street_address: string;
+  area: string;
+  city?: string;
+  postal_code: string;
+  latitude?: string | null;
+  longitude?: string | null;
+  is_default?: boolean;
+}
+
+export interface CustomerAddressUpdate {
+  label?: string | null;
+  recipient_name?: string | null;
+  phone?: string | null;
+  street_address?: string | null;
+  area?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  latitude?: string | null;
+  longitude?: string | null;
+  is_default?: boolean | null;
+}
+
+export interface CustomerAddressRead {
+  address_id: string;
+  user_id: string;
+  label: string | null;
+  recipient_name: string;
+  phone: string;
+  street_address: string;
+  area: string;
+  city: string;
+  postal_code: string;
+  latitude: string | null;
+  longitude: string | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// --- Wishlist ---
+
+export interface WishlistItemAdd {
+  product_id: string;
+  shop_id: string;
+}
+
+export interface WishlistItemRead {
+  wishlist_id: string;
+  user_id: string;
+  product_id: string;
+  shop_id: string;
+  added_at: string;
+  product_name: string | null;
+  product_slug: string | null;
+  product_image: string | null;
+  min_price: string | null;
+  max_price: string | null;
+  is_active: boolean;
+}

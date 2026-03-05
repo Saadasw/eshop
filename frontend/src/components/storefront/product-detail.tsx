@@ -9,6 +9,7 @@ import { PriceDisplay } from "./price-display";
 import { RatingStars } from "./rating-stars";
 import { VariantSelector } from "./variant-selector";
 import { AddToCartButton } from "./add-to-cart-button";
+import { WishlistButton } from "./wishlist-button";
 import { ProductReviews } from "./product-reviews";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -122,11 +123,14 @@ export function ProductDetail({ slug, productId }: ProductDetailProps) {
           </div>
         )}
 
-        <AddToCartButton
-          shopSlug={slug}
-          variantId={activeVariant?.variant_id ?? ""}
-          stockQuantity={activeVariant?.stock_quantity ?? 0}
-        />
+        <div className="flex items-center gap-2">
+          <AddToCartButton
+            shopSlug={slug}
+            variantId={activeVariant?.variant_id ?? ""}
+            stockQuantity={activeVariant?.stock_quantity ?? 0}
+          />
+          <WishlistButton productId={productId} shopId={product.shop_id} />
+        </div>
       </div>
 
       <div className="md:col-span-2 mt-8">

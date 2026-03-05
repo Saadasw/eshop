@@ -71,9 +71,20 @@ export const API_ROUTES = {
   ORDERS: "/api/v1/orders",
   ORDER: (orderId: string) => `/api/v1/orders/${orderId}`,
   ORDER_CANCEL: (orderId: string) => `/api/v1/orders/${orderId}/cancel`,
+  ORDER_REFUND: (orderId: string) => `/api/v1/orders/${orderId}/refund`,
   ADDRESSES: "/api/v1/addresses",
+  ADDRESS: (addressId: string) => `/api/v1/addresses/${addressId}`,
   WISHLIST: "/api/v1/wishlist",
+  WISHLIST_ITEM: (wishlistId: string) => `/api/v1/wishlist/${wishlistId}`,
   NOTIFICATIONS: "/api/v1/notifications",
+  NOTIFICATIONS_UNREAD_COUNT: "/api/v1/notifications/unread-count",
+  NOTIFICATION_READ: (notificationId: string) =>
+    `/api/v1/notifications/${notificationId}/read`,
+  NOTIFICATIONS_MARK_ALL_READ: "/api/v1/notifications/mark-all-read",
+  SHOP_REFUNDS: (slug: string) => `/api/v1/shops/${slug}/refunds`,
+  SHOP_REFUND: (slug: string, refundId: string) =>
+    `/api/v1/shops/${slug}/refunds/${refundId}`,
+  SHOP_PAYOUTS: (slug: string) => `/api/v1/shops/${slug}/payouts`,
 } as const;
 
 /** Frontend page paths. */
@@ -102,6 +113,10 @@ export const ROUTES = {
   DASHBOARD_SETTINGS: (slug: string) => `/dashboard/${slug}/settings`,
   DASHBOARD_COUPONS: (slug: string) => `/dashboard/${slug}/coupons`,
   DASHBOARD_REVIEWS: (slug: string) => `/dashboard/${slug}/reviews`,
+  DASHBOARD_REFUNDS: (slug: string) => `/dashboard/${slug}/refunds`,
+  DASHBOARD_PAYOUTS: (slug: string) => `/dashboard/${slug}/payouts`,
+  WISHLIST: "/wishlist",
+  ADDRESSES: "/addresses",
 } as const;
 
 /** localStorage / cookie key names for auth tokens. */
@@ -141,4 +156,6 @@ export const STATIC_PATHS = [
   "orders",
   "dashboard",
   "admin",
+  "wishlist",
+  "addresses",
 ] as const;

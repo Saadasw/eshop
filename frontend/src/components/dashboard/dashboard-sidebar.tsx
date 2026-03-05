@@ -14,6 +14,8 @@ import {
   Tag,
   Star,
   Settings,
+  RotateCcw,
+  Wallet,
 } from "lucide-react";
 
 interface DashboardSidebarProps {
@@ -28,6 +30,8 @@ const NAV_ITEMS = [
   { label: "Categories", icon: FolderTree, href: (s: string) => ROUTES.DASHBOARD_CATEGORIES(s) },
   { label: "Coupons", icon: Tag, href: (s: string) => ROUTES.DASHBOARD_COUPONS(s) },
   { label: "Reviews", icon: Star, href: (s: string) => ROUTES.DASHBOARD_REVIEWS(s) },
+  { label: "Refunds", icon: RotateCcw, href: (s: string) => ROUTES.DASHBOARD_REFUNDS(s) },
+  { label: "Payouts", icon: Wallet, href: (s: string) => ROUTES.DASHBOARD_PAYOUTS(s) },
   { label: "Settings", icon: Settings, href: (s: string) => ROUTES.DASHBOARD_SETTINGS(s) },
 ];
 
