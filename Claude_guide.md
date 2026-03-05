@@ -1,6 +1,6 @@
 # Claude Guide — E-Shop Platform Status & Roadmap
 
-> **Last updated:** 2026-03-05 (Phase 6B-6C complete — backend)
+> **Last updated:** 2026-03-05 (Phase 6B-6C complete — backend + frontend)
 > **Author:** Claude (AI Assistant)
 > **Purpose:** This document is a living conversation between Claude and you (the developer). It tells you exactly where the project stands, what's been built, what's missing, what's good, what needs fixing, and the precise path forward — phase by phase, file by file.
 
@@ -40,14 +40,15 @@
     │  FRONTEND CART+ORDERS   ████████████████████████  100%   │
     │  FRONTEND DASHBOARD     ████████████████████████  100%   │
     │  FRONTEND COUPONS+REVS  ████████████████████████  100%   │
+    │  FRONTEND 6B-6C         ████████████████████████  100%   │
     │  FRONTEND ADMIN         ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  TESTING                ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     ├──────────────────────────────────────────────────────────┤
-    │  OVERALL                ██████████████████░░░░░░  ~72%  │
+    │  OVERALL                ████████████████████░░░░  ~78%  │
     └──────────────────────────────────────────────────────────┘
 ```
 
-**In plain English:** The customer-facing app, shop owner dashboard, coupon/review features, and Phase 6B-6C backend are all complete. Customers can browse shops, buy products, apply coupon codes at checkout, view product reviews, manage delivery addresses, maintain wishlists, and track orders. Shop owners can manage products, process orders, handle categories, create/manage coupons, reply to reviews, process refunds, view payouts, and configure settings. Notifications are generated for key events. What's left: frontend integration for 6B-6C features, admin panel (Phase 6D), payments backend (bKash/Nagad), and bulk operations. No tests exist.
+**In plain English:** The customer-facing app, shop owner dashboard, and all Phase 6A-6C features (backend + frontend) are complete. Customers can browse shops, buy products, apply coupon codes at checkout, view product reviews, manage delivery addresses, maintain wishlists, receive notifications, request refunds on delivered orders, and track orders. Shop owners can manage products, process orders, handle categories, create/manage coupons, reply to reviews, process refunds, view payouts, and configure settings. The navbar has a notification bell with unread count, wishlist heart buttons on products, and user dropdown links to Wishlist and Addresses pages. What's left: admin panel (Phase 6D backend + frontend), payments backend (bKash/Nagad), bulk operations, and testing.
 
 ---
 
@@ -172,9 +173,13 @@ frontend/src/
 │   │   │   ├── checkout/page.tsx ✅ Checkout page (passes slug to CheckoutPage)
 │   │   │   └── products/[id]/
 │   │   │       └── page.tsx     ✅ Product detail page (passes slug+id to ProductDetail)
-│   │   └── orders/
-│   │       ├── page.tsx         ✅ Order history page (metadata + OrderListPage)
-│   │       └── [id]/page.tsx    ✅ Order detail page (passes orderId to OrderDetailPage)
+│   │   ├── orders/
+│   │   │   ├── page.tsx         ✅ Order history page (metadata + OrderListPage)
+│   │   │   └── [id]/page.tsx    ✅ Order detail page (passes orderId to OrderDetailPage)
+│   │   ├── wishlist/
+│   │   │   └── page.tsx         ✅ Wishlist page (metadata + WishlistPage)
+│   │   └── addresses/
+│   │       └── page.tsx         ✅ Address management page (metadata + AddressPage)
 │   └── (dashboard)/
 │       └── dashboard/[slug]/
 │           ├── layout.tsx       ✅ Route group layout (DashboardShell)
@@ -192,6 +197,10 @@ frontend/src/
 │           │   └── page.tsx     ✅ Coupon management
 │           ├── reviews/
 │           │   └── page.tsx     ✅ Review management
+│           ├── refunds/
+│           │   └── page.tsx     ✅ Refund management (passes slug to RefundList)
+│           ├── payouts/
+│           │   └── page.tsx     ✅ Payout history (passes slug to PayoutList)
 │           └── settings/
 │               └── page.tsx     ✅ Shop settings (config, delivery, payment, staff)
 │
@@ -202,14 +211,14 @@ frontend/src/
 │   │   ├── otp-form.tsx         ✅ 223 lines — 6-digit OTP + resend timer
 │   │   └── auth-guard.tsx       ✅ 37 lines — protected route wrapper
 │   ├── storefront/
-│   │   ├── navbar.tsx           ✅ Top nav — logo, Browse Shops, cart badge, user dropdown
+│   │   ├── navbar.tsx           ✅ Top nav — logo, Browse Shops, cart badge, notification bell, user dropdown
 │   │   ├── shop-card.tsx        ✅ Shop card — avatar, name, description, rating
 │   │   ├── shop-header.tsx      ✅ Shop banner + logo + name + rating
 │   │   ├── shop-list-page.tsx   ✅ Client — paginated shop grid with skeletons
 │   │   ├── shop-storefront.tsx  ✅ Client — shop page with URL-based filter state
 │   │   ├── product-card.tsx     ✅ Product card — image, name, brand, price, badges
 │   │   ├── product-grid.tsx     ✅ Responsive grid (2/3/4 cols) with empty state
-│   │   ├── product-detail.tsx   ✅ Client — gallery + variants + add-to-cart + reviews
+│   │   ├── product-detail.tsx   ✅ Client — gallery + variants + add-to-cart + wishlist + reviews
 │   │   ├── product-filters.tsx  ✅ Orchestrates search + sort + category filter
 │   │   ├── image-gallery.tsx    ✅ Client — main image + thumbnail strip
 │   │   ├── variant-selector.tsx ✅ Client — variant pills with stock handling
@@ -229,12 +238,17 @@ frontend/src/
 │   │   ├── order-card.tsx       ✅ Order summary card for order list
 │   │   ├── order-timeline.tsx   ✅ Vertical status timeline with icons
 │   │   ├── order-list-page.tsx  ✅ Client — paginated order history with auth guard
-│   │   ├── order-detail-page.tsx ✅ Client — items table, payment summary, timeline, cancel
+│   │   ├── order-detail-page.tsx ✅ Client — items table, payment summary, timeline, cancel, refund
 │   │   ├── product-reviews.tsx  ✅ Client — review list with pagination on product detail
-│   │   └── coupon-input.tsx     ✅ Client — coupon code input with validation for checkout
+│   │   ├── coupon-input.tsx     ✅ Client — coupon code input with validation for checkout
+│   │   ├── notification-bell.tsx ✅ Client — bell icon with unread badge + dropdown
+│   │   ├── wishlist-button.tsx  ✅ Client — heart toggle on product detail
+│   │   ├── wishlist-page.tsx    ✅ Client — paginated wishlist with remove action
+│   │   ├── address-page.tsx     ✅ Client — address CRUD with create/edit dialog
+│   │   └── refund-dialog.tsx    ✅ Client — item selector + reason for refund request
 │   ├── dashboard/
 │   │   ├── dashboard-shell.tsx        ✅ Auth guard + owner verification + sidebar + topbar + mobile hamburger
-│   │   ├── dashboard-sidebar.tsx      ✅ Nav links (Home, Orders, Products, Categories, Coupons, Reviews, Settings) + active state
+│   │   ├── dashboard-sidebar.tsx      ✅ Nav links (Home, Orders, Products, Categories, Coupons, Reviews, Refunds, Payouts, Settings) + active state
 │   │   ├── dashboard-home.tsx         ✅ Welcome card, stats cards, quick actions, recent orders
 │   │   ├── order-list.tsx             ✅ Orders table with status filter, pagination
 │   │   ├── order-detail.tsx           ✅ Order info, items table, timeline, status update, cancel
@@ -252,7 +266,9 @@ frontend/src/
 │   │   ├── staff-form-dialog.tsx      ✅ Staff management dialog
 │   │   ├── coupon-list.tsx           ✅ Coupons table with CRUD dialogs + pagination
 │   │   ├── coupon-form-dialog.tsx    ✅ Create/edit coupon dialog (discount, limits, dates)
-│   │   └── review-list.tsx           ✅ Reviews across products with reply/delete actions
+│   │   ├── review-list.tsx           ✅ Reviews across products with reply/delete actions
+│   │   ├── refund-list.tsx           ✅ Refund table with status filter + manage/update dialog
+│   │   └── payout-list.tsx           ✅ Payout history table (period, amounts, status)
 │   └── ui/
 │       ├── button.tsx           ✅ CVA variants (default, destructive, outline, etc.)
 │       ├── card.tsx             ✅ Card components
@@ -288,7 +304,12 @@ frontend/src/
 │   │   ├── dashboard-categories.ts ✅ createCategory, updateCategory, deleteCategory
 │   │   ├── dashboard-settings.ts ✅ Shop config, delivery zones, payment methods, staff, addresses CRUD
 │   │   ├── coupons.ts            ✅ listCoupons, createCoupon, updateCoupon, deleteCoupon, validateCoupon
-│   │   └── reviews.ts            ✅ listProductReviews, createReview, replyToReview, deleteReview
+│   │   ├── reviews.ts            ✅ listProductReviews, createReview, replyToReview, deleteReview
+│   │   ├── refunds.ts            ✅ requestRefund, listShopRefunds, getShopRefund, updateRefundStatus
+│   │   ├── payouts.ts            ✅ listPayouts
+│   │   ├── notifications.ts      ✅ listNotifications, getUnreadCount, markRead, markAllRead
+│   │   ├── addresses.ts          ✅ listAddresses, createAddress, updateAddress, deleteAddress
+│   │   └── wishlist.ts           ✅ listWishlist, addToWishlist, removeFromWishlist
 │   ├── supabase/
 │   │   ├── client.ts            ✅ Browser Supabase client
 │   │   └── server.ts            ✅ Server Supabase client (SSR cookies)
@@ -310,7 +331,12 @@ frontend/src/
 │   ├── use-dashboard-categories.ts ✅ useDashboardCategories, create/update/delete mutations
 │   ├── use-dashboard-settings.ts ✅ 13 hooks for config, delivery zones, payment methods, staff, addresses
 │   ├── use-coupons.ts            ✅ useCoupons, useCreateCoupon, useUpdateCoupon, useDeleteCoupon, useValidateCoupon
-│   └── use-reviews.ts            ✅ useProductReviews, useCreateReview, useReplyToReview, useDeleteReview
+│   ├── use-reviews.ts            ✅ useProductReviews, useCreateReview, useReplyToReview, useDeleteReview
+│   ├── use-refunds.ts            ✅ useRequestRefund, useShopRefunds, useShopRefund, useUpdateRefundStatus
+│   ├── use-payouts.ts            ✅ usePayouts
+│   ├── use-notifications.ts      ✅ useNotifications, useUnreadCount (30s poll), useMarkRead, useMarkAllRead
+│   ├── use-addresses.ts          ✅ useAddresses, useCreateAddress, useUpdateAddress, useDeleteAddress
+│   └── use-wishlist.ts           ✅ useWishlist, useAddToWishlist, useRemoveFromWishlist
 │
 ├── providers/
 │   ├── providers.tsx            ✅ Composite provider wrapper
@@ -319,7 +345,7 @@ frontend/src/
 │   └── toast-provider.tsx       ✅ Sonner toaster
 │
 ├── types/
-│   └── database.ts              ✅ ~710 lines — all TypeScript types (including coupon/review + dashboard mutation types)
+│   └── database.ts              ✅ ~870 lines — all TypeScript types (incl. refund, payout, notification, address, wishlist)
 │
 └── proxy.ts                     ✅ Next.js 16 proxy (Supabase cookie refresh)
 ```
@@ -379,6 +405,7 @@ The `/api/v1/users/me` endpoint (GET, PATCH, DELETE for the current user's profi
 | ~~**Phase 4A: Cart & Checkout**~~ | ~~Cart page, checkout (COD), order history/detail~~ | **DONE** (13 new files, ~1,500 lines) |
 | ~~**Phase 4B: Dashboard**~~ | ~~Shop owner dashboard with sidebar~~ | **DONE** (35 new files + 4 backend, ~4,500 lines) |
 | ~~**Phase 6A: Coupons+Reviews**~~ | ~~Backend+frontend for coupons and reviews~~ | **DONE** (6 BE + 11 FE files, ~1,900 lines) |
+| ~~**Phase 6B-6C: Frontend**~~ | ~~Refunds, payouts, notifications, addresses, wishlist UI~~ | **DONE** (22 new + 6 modified files, ~2,200 lines) |
 | **Phase 5: Admin** | Admin panel with sidebar | ~5 pages, ~10 components |
 
 ### 3.5 Testing — Zero Coverage
@@ -432,8 +459,8 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 │  ✅ DONE: Backend Phases 1-4 (Foundation→Cart+Orders)    │
 │  ✅ DONE: Frontend Phases 1-4B (Foundation→Dashboard)    │
 │  ✅ DONE: Phase 6A (Coupons + Reviews — BE + FE)         │
-│  ✅ DONE: Phase 6B-6C Backend (Refunds, Payouts,         │
-│  Notifications, Addresses, Wishlist) — 15 files          │
+│  ✅ DONE: Phase 6B-6C (Refunds, Payouts, Notifications,  │
+│  Addresses, Wishlist — Backend + Frontend) — 37 files    │
 └────────────────────────┬────────────────────────────────┘
                          │
                     YOU ARE HERE
@@ -561,7 +588,7 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 - Review creation requires delivered order containing the product
 - DB triggers handle `times_used` (coupon) and `avg_rating`/`review_count` (review) automatically
 - Checkout shows discount in order total and passes `coupon_code` to order creation
-- Dashboard sidebar now has 7 nav items (Home, Orders, Products, Categories, Coupons, Reviews, Settings)
+- Dashboard sidebar gained Coupons+Reviews nav items (later extended to 9 items with Refunds+Payouts in Phase 6B-6C FE)
 
 ---
 
@@ -587,7 +614,7 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 - Discriminated unions for type-safe create vs update forms
 - Mobile-responsive sidebar with hamburger toggle
 - Navbar "Dashboard" link for users with `primary_role === "owner"`
-- Coupon and review pages deferred (depend on Backend Phase 6A)
+- Coupon, review, refund, and payout pages added in subsequent phases (6A + 6B-6C)
 
 ---
 
@@ -614,6 +641,31 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 - Notification service is internal helper (no commit) — called by other services
 - Address is_default management: auto-unsets other defaults
 - Router now has 13 sub-routers, ~90+ API endpoints
+
+---
+
+### Frontend Phase 6B-6C: Refunds, Payouts, Notifications, Addresses, Wishlist — ✅ COMPLETE
+
+**Status:** Done (2026-03-05). 22 new files + 6 modified files, ~2,200 lines.
+
+**New files (22):**
+- **API wrappers (5):** `refunds.ts` (request, list, get, update status), `payouts.ts` (list), `notifications.ts` (list, unread count, mark read/all), `addresses.ts` (CRUD), `wishlist.ts` (add, remove, list)
+- **Query hooks (5):** `use-refunds.ts` (4 hooks), `use-payouts.ts` (1 hook), `use-notifications.ts` (4 hooks with 30s polling), `use-addresses.ts` (4 hooks), `use-wishlist.ts` (3 hooks)
+- **Storefront components (5):** `notification-bell.tsx` (bell icon + unread badge + dropdown), `wishlist-button.tsx` (heart toggle), `wishlist-page.tsx` (paginated list + remove), `address-page.tsx` (CRUD + dialog form), `refund-dialog.tsx` (item selector + reason)
+- **Dashboard components (2):** `refund-list.tsx` (table + status filter + manage dialog with transitions), `payout-list.tsx` (table with period/amounts/status)
+- **Pages (4):** `/wishlist`, `/addresses`, `/dashboard/[slug]/refunds`, `/dashboard/[slug]/payouts`
+- **Types:** Added ~160 lines to `database.ts` (refund, payout, notification, address, wishlist types)
+
+**Modified files (6):** `constants.ts` (API routes + frontend routes + static paths), `navbar.tsx` (notification bell + Wishlist/Addresses in dropdown), `product-detail.tsx` (wishlist heart button), `order-detail-page.tsx` (refund button for delivered/shipped), `dashboard-sidebar.tsx` (Refunds + Payouts nav items — now 9 items)
+
+**Key features:**
+- Notification bell in navbar polls unread count every 30 seconds, shows dropdown with recent notifications
+- Wishlist heart button on product detail page, toggles add/remove with toast feedback
+- Refund dialog on order detail (delivered/shipped orders only) — select items + quantities + reason
+- Address management page with create/edit dialog, BD phone validation, default toggle
+- Dashboard refund management with status filter, detail dialog, and valid transition buttons (approve/reject/process/complete)
+- Dashboard payout history table showing period, gross, commission, refund deductions, net amount
+- Dashboard sidebar now has 9 nav items (Home, Orders, Products, Categories, Coupons, Reviews, Refunds, Payouts, Settings)
 
 ---
 
@@ -656,8 +708,8 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 4. ~~**Shop owner dashboard** (manage products & orders) — ~3 sessions~~ **DONE**
 5. ~~**Coupons + reviews backend + frontend** (storefront polish) — ~2 sessions~~ **DONE**
 6. ~~**Phase 6B-6C backend** (refunds, notifications, addresses, wishlist) — 1 session~~ **DONE**
-7. **Phase 6B-6C frontend integration** (hooks, API wrappers, UI) — ~1 session ← **NEXT**
-8. **Admin panel + bulk operations** (shop approval, users, CSV import) — ~2 sessions
+7. ~~**Phase 6B-6C frontend integration** (hooks, API wrappers, UI) — ~1 session~~ **DONE**
+8. **Admin panel + bulk operations** (shop approval, users, CSV import) — ~2 sessions ← **NEXT**
 9. **Payments** (bKash/Nagad integration) — ~1 session
 10. **Testing** — ~2 sessions
 
@@ -674,14 +726,14 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 | ~~Coupons + reviews (BE)~~ | ~~6 files~~ | ~~~640~~ | ~~1~~ | **DONE** |
 | ~~Coupons + reviews (FE)~~ | ~~11 files~~ | ~~~1,260~~ | ~~1~~ | **DONE** |
 | ~~Phase 6B-6C (BE)~~ | ~~15 files~~ | ~~1,500~~ | ~~1~~ | **DONE** |
-| Phase 6B-6C (FE integration) | ~8 files | ~800 | 1 | **NEXT** |
-| Admin backend + frontend | ~10 files | ~1,500 | 2 | pending |
+| ~~Phase 6B-6C (FE integration)~~ | ~~22 new + 6 mod~~ | ~~2,200~~ | ~~1~~ | **DONE** |
+| Admin backend + frontend | ~10 files | ~1,500 | 2 | **NEXT** |
 | Bulk operations | 3 files | ~400 | 1 | pending |
 | Testing | ~15 files | ~2,000 | 2 | pending |
-| **Total remaining** | **~46 files** | **~5,900 lines** | **~8 sessions** | |
+| **Total remaining** | **~28 files** | **~3,900 lines** | **~5 sessions** | |
 
-**Current codebase:** ~190 files, ~20,000 lines
-**Projected final:** ~235 files, ~26,000 lines
+**Current codebase:** ~227 files (71 BE + 156 FE), ~24,600 lines (10,300 BE + 14,300 FE)
+**Projected final:** ~255 files, ~28,500 lines
 
 ---
 
@@ -733,8 +785,8 @@ I'll follow the CLAUDE.md patterns, create the files in the right order, and wir
 
 ## Final Words
 
-The platform is feature-rich and growing. Customers can browse shops, view products, apply coupon codes, read reviews, add to cart, checkout with COD, and track orders. Shop owners can manage products (with variants and media), process orders (with status transitions), organize categories, create/manage discount coupons, reply to customer reviews, and configure their store (delivery zones, payment methods, staff). The codebase is at ~190 files and ~20,000 lines with consistent patterns throughout.
+The platform is feature-rich and nearing completion. Customers can browse shops, view products, save to wishlist, apply coupon codes, read/write reviews, manage delivery addresses, add to cart, checkout with COD, track orders, request refunds on delivered orders, and receive in-app notifications. Shop owners can manage products (with variants and media), process orders (with status transitions), organize categories, create/manage discount coupons, reply to customer reviews, manage refund requests (approve/reject/process), view payout history, and configure their store (delivery zones, payment methods, staff). The codebase is at ~227 files and ~24,600 lines with consistent patterns throughout.
 
-**My recommendation: Build Frontend Phase 6B-6C integration next.** The backend for refunds, payouts, notifications, addresses, and wishlist is complete. Next, create the frontend hooks, API wrappers, and UI components to consume these endpoints. After that, build the admin panel (Phase 6D + Frontend Phase 5) for platform management, then payments (bKash/Nagad), then testing.
+**My recommendation: Build Phase 6D (Admin + Bulk) next.** This is the last major feature block before the platform is functionally complete. Create the admin backend (shop approval, user management, platform settings, audit logs, bulk CSV import/export) and admin frontend panel. After that, add payments (bKash/Nagad), then testing.
 
 Let's build.
