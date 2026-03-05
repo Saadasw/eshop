@@ -1,6 +1,6 @@
 # Claude Guide — E-Shop Platform Status & Roadmap
 
-> **Last updated:** 2026-03-04 (Phase 4B complete)
+> **Last updated:** 2026-03-05 (Phase 6A complete — backend + frontend)
 > **Author:** Claude (AI Assistant)
 > **Purpose:** This document is a living conversation between Claude and you (the developer). It tells you exactly where the project stands, what's been built, what's missing, what's good, what needs fixing, and the precise path forward — phase by phase, file by file.
 
@@ -31,20 +31,22 @@
     │  BACKEND SHOP+PRODUCTS  ████████████████████████  100%   │
     │  BACKEND CART+ORDERS    ████████████████████████  100%   │
     │  BACKEND PAYMENTS       ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
-    │  BACKEND PHASE 6A-6D   ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
+    │  BACKEND PHASE 6A       ████████████████████████  100%   │
+    │  BACKEND PHASE 6B-6D   ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  FRONTEND FOUNDATION    ████████████████████████  100%   │
     │  FRONTEND AUTH          ████████████████████████  100%   │
     │  FRONTEND STOREFRONT    ████████████████████████  100%   │
     │  FRONTEND CART+ORDERS   ████████████████████████  100%   │
     │  FRONTEND DASHBOARD     ████████████████████████  100%   │
+    │  FRONTEND COUPONS+REVS  ████████████████████████  100%   │
     │  FRONTEND ADMIN         ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  TESTING                ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     ├──────────────────────────────────────────────────────────┤
-    │  OVERALL                ██████████████░░░░░░░░░░  ~58%  │
+    │  OVERALL                ████████████████░░░░░░░░  ~65%  │
     └──────────────────────────────────────────────────────────┘
 ```
 
-**In plain English:** The customer-facing app and the shop owner dashboard are both complete. Database, backend core (auth, shops, products, cart, orders), frontend auth, customer storefront, cart/checkout/orders, and the **full shop owner dashboard** are all done. Customers can browse, buy, and track orders. Shop owners can manage products, process orders, handle categories, and configure settings (delivery zones, payment methods, staff). What's left: admin panel, payments backend (bKash/Nagad), and Phase 6 features (coupons, reviews, refunds, notifications, wishlist). No tests exist.
+**In plain English:** The customer-facing app, shop owner dashboard, and coupon/review features are all complete. Customers can browse shops, buy products, apply coupon codes at checkout, view product reviews, and track orders. Shop owners can manage products, process orders, handle categories, create/manage coupons, reply to reviews, and configure settings. What's left: admin panel, payments backend (bKash/Nagad), and Phase 6B-6D features (refunds, notifications, addresses, wishlist, bulk operations). No tests exist.
 
 ---
 
@@ -91,31 +93,37 @@ backend/app/
 │   ├── audit.py                 ✅ AuditLog, BulkJob, PlatformSetting
 │   └── archive.py               ✅ OrderArchive, PaymentArchive, AuditLogArchive
 │
-├── schemas/                     ✅ 6 domain schema files + common
+├── schemas/                     ✅ 8 domain schema files + common
 │   ├── common.py                ✅ PaginatedResponse, ErrorResponse
 │   ├── user.py                  ✅ UserCreate, UserRead, RegisterRequest, LoginRequest, TokenPair, AuthResponse
 │   ├── shop.py                  ✅ ShopCreate, ShopRead, ShopUpdate, ShopConfigRead/Update, StaffCreate/Read, etc.
 │   ├── product.py               ✅ ProductCreate, ProductRead, VariantCreate/Read, CategoryCreate/Read, MediaRead, etc.
 │   ├── cart.py                  ✅ CartRead, CartItemAdd, CartItemRead
-│   └── order.py                 ✅ OrderCreate, OrderRead, OrderItemRead, OrderStatusUpdate
+│   ├── order.py                 ✅ OrderCreate, OrderRead, OrderItemRead, OrderStatusUpdate
+│   ├── coupon.py                ✅ CouponCreate, CouponRead, CouponUpdate, CouponValidateRequest/Response, CouponUsageRead
+│   └── review.py                ✅ ReviewCreate, ReviewRead, ReviewReply
 │
-├── services/                    ✅ 6 service files implemented
+├── services/                    ✅ 8 service files implemented
 │   ├── auth_service.py          ✅ 394 lines — register, login, refresh, logout, lockout
 │   ├── shop_service.py          ✅ ~720 lines — CRUD, config, staff, payment methods, delivery zones, list endpoints
 │   ├── product_service.py       ✅ 703 lines — product/variant CRUD, media upload, price sync
 │   ├── category_service.py      ✅ 175 lines — category CRUD
 │   ├── cart_service.py          ✅ 346 lines — add/remove items, stock check, guest merge
-│   └── order_service.py         ✅ 522 lines — cart→order, snapshots, state machine, status history
+│   ├── order_service.py         ✅ 522 lines — cart→order, snapshots, state machine, status history
+│   ├── coupon_service.py        ✅ ~250 lines — CRUD, validate (active/dates/usage limits/min order), calculate discount, record usage
+│   └── review_service.py        ✅ ~215 lines — create (requires delivered order), list with customer names, reply, soft-delete
 │
 ├── api/
-│   ├── router.py                ✅ Master router
+│   ├── router.py                ✅ Master router (8 sub-routers)
 │   └── v1/
 │       ├── auth.py              ✅ 104 lines — register, login, logout, refresh
 │       ├── shops.py             ✅ ~400 lines — CRUD, config, staff, payment, delivery zones, list endpoints
 │       ├── products.py          ✅ 298 lines — product/variant CRUD, media, attributes
 │       ├── categories.py        ✅ 85 lines — category CRUD
 │       ├── cart.py              ✅ 88 lines — cart operations
-│       └── orders.py            ✅ 203 lines — place order, list, status update
+│       ├── orders.py            ✅ 203 lines — place order, list, status update
+│       ├── coupons.py           ✅ ~130 lines — CRUD + POST validate
+│       └── reviews.py           ✅ ~95 lines — create, list, reply, soft-delete
 │
 ├── core/
 │   ├── security.py              ✅ JWT encode/decode, bcrypt hashing
@@ -164,6 +172,10 @@ frontend/src/
 │           │   └── [id]/edit/page.tsx ✅ Edit product + variants + media
 │           ├── categories/
 │           │   └── page.tsx     ✅ Category management
+│           ├── coupons/
+│           │   └── page.tsx     ✅ Coupon management
+│           ├── reviews/
+│           │   └── page.tsx     ✅ Review management
 │           └── settings/
 │               └── page.tsx     ✅ Shop settings (config, delivery, payment, staff)
 │
@@ -181,7 +193,7 @@ frontend/src/
 │   │   ├── shop-storefront.tsx  ✅ Client — shop page with URL-based filter state
 │   │   ├── product-card.tsx     ✅ Product card — image, name, brand, price, badges
 │   │   ├── product-grid.tsx     ✅ Responsive grid (2/3/4 cols) with empty state
-│   │   ├── product-detail.tsx   ✅ Client — gallery + variants + add-to-cart
+│   │   ├── product-detail.tsx   ✅ Client — gallery + variants + add-to-cart + reviews
 │   │   ├── product-filters.tsx  ✅ Orchestrates search + sort + category filter
 │   │   ├── image-gallery.tsx    ✅ Client — main image + thumbnail strip
 │   │   ├── variant-selector.tsx ✅ Client — variant pills with stock handling
@@ -196,15 +208,17 @@ frontend/src/
 │   │   ├── cart-item.tsx        ✅ Client — cart item row with quantity controls + remove
 │   │   ├── cart-summary.tsx     ✅ Subtotal, item count, proceed to checkout
 │   │   ├── cart-page.tsx        ✅ Client — full cart page with auth guard
-│   │   ├── checkout-page.tsx    ✅ Client — COD checkout, order summary, place order
+│   │   ├── checkout-page.tsx    ✅ Client — COD checkout, coupon input, order summary, place order
 │   │   ├── order-status-badge.tsx ✅ Colored badge per order status
 │   │   ├── order-card.tsx       ✅ Order summary card for order list
 │   │   ├── order-timeline.tsx   ✅ Vertical status timeline with icons
 │   │   ├── order-list-page.tsx  ✅ Client — paginated order history with auth guard
-│   │   └── order-detail-page.tsx ✅ Client — items table, payment summary, timeline, cancel
+│   │   ├── order-detail-page.tsx ✅ Client — items table, payment summary, timeline, cancel
+│   │   ├── product-reviews.tsx  ✅ Client — review list with pagination on product detail
+│   │   └── coupon-input.tsx     ✅ Client — coupon code input with validation for checkout
 │   ├── dashboard/
 │   │   ├── dashboard-shell.tsx        ✅ Auth guard + owner verification + sidebar + topbar + mobile hamburger
-│   │   ├── dashboard-sidebar.tsx      ✅ Nav links (Home, Orders, Products, Categories, Settings) + active state
+│   │   ├── dashboard-sidebar.tsx      ✅ Nav links (Home, Orders, Products, Categories, Coupons, Reviews, Settings) + active state
 │   │   ├── dashboard-home.tsx         ✅ Welcome card, stats cards, quick actions, recent orders
 │   │   ├── order-list.tsx             ✅ Orders table with status filter, pagination
 │   │   ├── order-detail.tsx           ✅ Order info, items table, timeline, status update, cancel
@@ -219,7 +233,10 @@ frontend/src/
 │   │   ├── settings-page.tsx          ✅ Tabbed settings (General, Config, Delivery, Payment, Staff)
 │   │   ├── delivery-zone-form-dialog.tsx  ✅ Zone CRUD dialog
 │   │   ├── payment-method-form-dialog.tsx ✅ Payment method config dialog
-│   │   └── staff-form-dialog.tsx      ✅ Staff management dialog
+│   │   ├── staff-form-dialog.tsx      ✅ Staff management dialog
+│   │   ├── coupon-list.tsx           ✅ Coupons table with CRUD dialogs + pagination
+│   │   ├── coupon-form-dialog.tsx    ✅ Create/edit coupon dialog (discount, limits, dates)
+│   │   └── review-list.tsx           ✅ Reviews across products with reply/delete actions
 │   └── ui/
 │       ├── button.tsx           ✅ CVA variants (default, destructive, outline, etc.)
 │       ├── card.tsx             ✅ Card components
@@ -253,7 +270,9 @@ frontend/src/
 │   │   ├── shop-orders.ts       ✅ listShopOrders, getShopOrder, updateOrderStatus, cancelShopOrder
 │   │   ├── dashboard-products.ts ✅ Product/variant/media CRUD (create, update, delete, upload)
 │   │   ├── dashboard-categories.ts ✅ createCategory, updateCategory, deleteCategory
-│   │   └── dashboard-settings.ts ✅ Shop config, delivery zones, payment methods, staff, addresses CRUD
+│   │   ├── dashboard-settings.ts ✅ Shop config, delivery zones, payment methods, staff, addresses CRUD
+│   │   ├── coupons.ts            ✅ listCoupons, createCoupon, updateCoupon, deleteCoupon, validateCoupon
+│   │   └── reviews.ts            ✅ listProductReviews, createReview, replyToReview, deleteReview
 │   ├── supabase/
 │   │   ├── client.ts            ✅ Browser Supabase client
 │   │   └── server.ts            ✅ Server Supabase client (SSR cookies)
@@ -273,7 +292,9 @@ frontend/src/
 │   ├── use-shop-orders.ts       ✅ useShopOrders, useShopOrder, useUpdateOrderStatus, useCancelShopOrder
 │   ├── use-dashboard-products.ts ✅ 9 mutation hooks for product/variant/media CRUD
 │   ├── use-dashboard-categories.ts ✅ useDashboardCategories, create/update/delete mutations
-│   └── use-dashboard-settings.ts ✅ 13 hooks for config, delivery zones, payment methods, staff, addresses
+│   ├── use-dashboard-settings.ts ✅ 13 hooks for config, delivery zones, payment methods, staff, addresses
+│   ├── use-coupons.ts            ✅ useCoupons, useCreateCoupon, useUpdateCoupon, useDeleteCoupon, useValidateCoupon
+│   └── use-reviews.ts            ✅ useProductReviews, useCreateReview, useReplyToReview, useDeleteReview
 │
 ├── providers/
 │   ├── providers.tsx            ✅ Composite provider wrapper
@@ -282,7 +303,7 @@ frontend/src/
 │   └── toast-provider.tsx       ✅ Sonner toaster
 │
 ├── types/
-│   └── database.ts              ✅ ~630 lines — all TypeScript types (including dashboard mutation types)
+│   └── database.ts              ✅ ~710 lines — all TypeScript types (including coupon/review + dashboard mutation types)
 │
 └── proxy.ts                     ✅ Next.js 16 proxy (Supabase cookie refresh)
 ```
@@ -312,8 +333,8 @@ frontend/src/
 | 5 | `payment_service.py` | `payment.py` | `payments.py` | Payment initiation, gateway integration, webhook handling |
 | 5 | — | — | `webhooks/bkash.py` | bKash IPN webhook receiver |
 | 5 | — | — | `webhooks/nagad.py` | Nagad callback webhook |
-| 6A | `coupon_service.py` | `coupon.py` | `coupons.py` | Coupon CRUD, validation, usage tracking |
-| 6A | `review_service.py` | `review.py` | `reviews.py` | Review CRUD, shop reply, rating sync |
+| ~~6A~~ | ~~`coupon_service.py`~~ | ~~`coupon.py`~~ | ~~`coupons.py`~~ | **DONE** — Coupon CRUD, validation, usage tracking |
+| ~~6A~~ | ~~`review_service.py`~~ | ~~`review.py`~~ | ~~`reviews.py`~~ | **DONE** — Review CRUD, shop reply, rating sync |
 | 6B | `refund_service.py` | `refund.py` | `refunds.py` | Refund request/approve/reject/process flow |
 | 6B | `payout_service.py` | `payout.py` | `payouts.py` | Payout calculation, commission deduction |
 | 6C | `notification_service.py` | `notification.py` | `notifications.py` | In-app notifications, unread count, mark read |
@@ -341,6 +362,7 @@ The `/api/v1/users/me` endpoint (GET, PATCH, DELETE for the current user's profi
 | ~~**Phase 3: Storefront**~~ | ~~Shop discovery, shop detail, product detail~~ | **DONE** (30 files, ~2,000 lines) |
 | ~~**Phase 4A: Cart & Checkout**~~ | ~~Cart page, checkout (COD), order history/detail~~ | **DONE** (13 new files, ~1,500 lines) |
 | ~~**Phase 4B: Dashboard**~~ | ~~Shop owner dashboard with sidebar~~ | **DONE** (35 new files + 4 backend, ~4,500 lines) |
+| ~~**Phase 6A: Coupons+Reviews**~~ | ~~Backend+frontend for coupons and reviews~~ | **DONE** (6 BE + 11 FE files, ~1,900 lines) |
 | **Phase 5: Admin** | Admin panel with sidebar | ~5 pages, ~10 components |
 
 ### 3.5 Testing — Zero Coverage
@@ -392,20 +414,12 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  ✅ DONE: Backend Phases 1-4 (Foundation→Cart+Orders)    │
-│  ✅ DONE: Frontend Phases 1-3 (Foundation→Storefront)    │
-│  ✅ DONE: Frontend Phase 4A (Cart + Checkout + Orders)   │
-│  ✅ DONE: Frontend Phase 4B (Shop Owner Dashboard)       │
-│  35 new frontend files + 4 backend list endpoints       │
+│  ✅ DONE: Frontend Phases 1-4B (Foundation→Dashboard)    │
+│  ✅ DONE: Phase 6A (Coupons + Reviews — BE + FE)         │
+│  6 backend files + 11 frontend files, ~1,900 lines      │
 └────────────────────────┬────────────────────────────────┘
                          │
                     YOU ARE HERE
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│  Backend Phase 6A (Coupons + Reviews)                   │
-│  + Frontend integration (dashboard + storefront)        │
-│  Why: Makes the storefront feel complete                │
-└────────────────────────┬────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
@@ -504,18 +518,40 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 
 ---
 
-### Backend Phase 6A: Coupons & Reviews
+### Phase 6A: Coupons & Reviews (Backend + Frontend) — ✅ COMPLETE
 
-**Files to create:**
+**Status:** Done (2026-03-05). 6 backend files + 11 frontend files, ~1,900 lines.
 
-| File | Lines (est.) | What It Does |
-|------|-------------|-------------|
-| `schemas/coupon.py` | ~60 | CouponCreate, CouponRead, CouponValidate, CouponUsageRead |
-| `services/coupon_service.py` | ~200 | Create/list/update/delete coupons, validate against cart, apply to order |
-| `api/v1/coupons.py` | ~100 | CRUD routes + POST validate |
-| `schemas/review.py` | ~50 | ReviewCreate, ReviewRead, ReviewReply |
-| `services/review_service.py` | ~150 | Create review (must have completed order), shop reply, list by product |
-| `api/v1/reviews.py` | ~80 | CRUD routes + reply endpoint |
+**Backend (6 files):**
+- `schemas/coupon.py` (~105 lines) — CouponCreate (with scope validation), CouponUpdate, CouponRead, CouponValidateRequest/Response, CouponUsageRead
+- `services/coupon_service.py` (~250 lines) — CRUD, validate (checks active, dates, global/per-user usage limits, min order), calculate discount (fixed/percentage with cap), record usage
+- `api/v1/coupons.py` (~130 lines) — POST/GET/PATCH/DELETE `/shops/{slug}/coupons`, POST `/shops/{slug}/coupons/validate`
+- `schemas/review.py` (~50 lines) — ReviewCreate, ReviewRead (includes customer_name), ReviewReply
+- `services/review_service.py` (~215 lines) — Create (verifies delivered order + product in order + no duplicate), list with customer names, reply, soft-delete
+- `api/v1/reviews.py` (~95 lines) — POST/GET `/shops/{slug}/products/{id}/reviews`, POST `/shops/{slug}/reviews/{id}/reply`, DELETE `/shops/{slug}/reviews/{id}`
+
+**Frontend (11 files):**
+- `lib/api/coupons.ts` — CRUD + validate API wrappers
+- `lib/api/reviews.ts` — List, create, reply, delete API wrappers
+- `hooks/use-coupons.ts` — 5 hooks (list, create, update, delete, validate)
+- `hooks/use-reviews.ts` — 4 hooks (list, create, reply, delete)
+- `components/storefront/product-reviews.tsx` — Review list with pagination on product detail
+- `components/storefront/coupon-input.tsx` — Coupon code input with apply/remove for checkout
+- `components/dashboard/coupon-list.tsx` — Coupon management table with CRUD
+- `components/dashboard/coupon-form-dialog.tsx` — Create/edit coupon dialog
+- `components/dashboard/review-list.tsx` — Review management with reply/delete
+- `app/(dashboard)/.../coupons/page.tsx` — Dashboard coupons page
+- `app/(dashboard)/.../reviews/page.tsx` — Dashboard reviews page
+
+**Modified files (5):** `types/database.ts` (coupon+review types), `constants.ts` (API+dashboard routes), `product-detail.tsx` (added reviews section), `checkout-page.tsx` (added coupon input + discount in total), `dashboard-sidebar.tsx` (added Coupons+Reviews nav items)
+
+**Key features:**
+- Coupon codes stored uppercase, validated with active/date/usage checks
+- Coupon validation returns friendly response (not 4xx) for UX
+- Review creation requires delivered order containing the product
+- DB triggers handle `times_used` (coupon) and `avg_rating`/`review_count` (review) automatically
+- Checkout shows discount in order total and passes `coupon_code` to order creation
+- Dashboard sidebar now has 7 nav items (Home, Orders, Products, Categories, Coupons, Reviews, Settings)
 
 ---
 
@@ -594,10 +630,11 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 2. ~~**Customer storefront pages** (browse shops & products) — ~2 sessions~~ **DONE**
 3. ~~**Cart + checkout + order pages** (complete purchase flow) — ~2 sessions~~ **DONE**
 4. ~~**Shop owner dashboard** (manage products & orders) — ~3 sessions~~ **DONE**
-5. **Coupons + reviews backend + frontend** (storefront polish) — ~2 sessions ← **NEXT**
-6. **Admin panel** (shop approval, users) — ~2 sessions
-7. **Remaining features** (refunds, notifications, wishlist, bulk, payouts) — ~3 sessions
-8. **Testing** — ~2 sessions
+5. ~~**Coupons + reviews backend + frontend** (storefront polish) — ~2 sessions~~ **DONE**
+6. **Phase 6B-6C** (refunds, notifications, addresses, wishlist) — ~3 sessions ← **NEXT**
+7. **Admin panel + bulk operations** (shop approval, users, CSV import) — ~2 sessions
+8. **Payments** (bKash/Nagad integration) — ~1 session
+9. **Testing** — ~2 sessions
 
 ---
 
@@ -609,17 +646,17 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 | ~~Customer storefront (FE)~~ | ~~20 files~~ | ~~2,500~~ | ~~2~~ | **DONE** |
 | ~~Cart + checkout (FE)~~ | ~~13 files~~ | ~~1,500~~ | ~~2~~ | **DONE** |
 | ~~Dashboard (FE + BE)~~ | ~~35+4 files~~ | ~~4,500~~ | ~~3~~ | **DONE** |
-| Coupons + reviews (BE) | 6 files | ~640 | 1 | **NEXT** |
-| Coupons + reviews (FE) | ~6 files | ~600 | 1 | pending |
-| Phase 6B-6C (BE) | 10 files | ~1,200 | 2 | pending |
+| ~~Coupons + reviews (BE)~~ | ~~6 files~~ | ~~~640~~ | ~~1~~ | **DONE** |
+| ~~Coupons + reviews (FE)~~ | ~~11 files~~ | ~~~1,260~~ | ~~1~~ | **DONE** |
+| Phase 6B-6C (BE) | 10 files | ~1,200 | 2 | **NEXT** |
 | Phase 6B-6C (FE integration) | ~8 files | ~800 | 1 | pending |
 | Admin backend + frontend | ~10 files | ~1,500 | 2 | pending |
 | Bulk operations | 3 files | ~400 | 1 | pending |
 | Testing | ~15 files | ~2,000 | 2 | pending |
-| **Total remaining** | **~58 files** | **~7,140 lines** | **~10 sessions** | |
+| **Total remaining** | **~46 files** | **~5,900 lines** | **~8 sessions** | |
 
-**Current codebase:** ~170 files, ~18,000 lines
-**Projected final:** ~230 files, ~25,000 lines
+**Current codebase:** ~190 files, ~20,000 lines
+**Projected final:** ~235 files, ~26,000 lines
 
 ---
 
@@ -671,8 +708,8 @@ I'll follow the CLAUDE.md patterns, create the files in the right order, and wir
 
 ## Final Words
 
-Both sides of the marketplace are now functional. Customers can browse shops, view products, add to cart, checkout with COD, and track orders. Shop owners can manage products (with variants and media), process orders (with status transitions), organize categories, and configure their store (delivery zones, payment methods, staff). The codebase is at ~170 files and ~18,000 lines with consistent patterns throughout.
+The platform is feature-rich and growing. Customers can browse shops, view products, apply coupon codes, read reviews, add to cart, checkout with COD, and track orders. Shop owners can manage products (with variants and media), process orders (with status transitions), organize categories, create/manage discount coupons, reply to customer reviews, and configure their store (delivery zones, payment methods, staff). The codebase is at ~190 files and ~20,000 lines with consistent patterns throughout.
 
-**My recommendation: Build Backend Phase 6A (Coupons + Reviews) next.** This adds two features that make the platform feel complete — customers can apply discount codes at checkout and leave reviews on products they've purchased. The dashboard already has placeholder spots for coupon and review management pages. After 6A, add the frontend integration (coupon validation at checkout, review display on product pages, coupon/review management in dashboard).
+**My recommendation: Build Backend Phase 6B-6C next.** This adds refunds (request/approve/process flow), notifications (in-app alerts for order events), customer address management, and wishlist. These are quality-of-life features that make the platform feel production-ready. After 6B-6C, build the admin panel (Phase 6D + Frontend Phase 5) for platform management, then payments (bKash/Nagad), then testing.
 
 Let's build.
