@@ -54,6 +54,16 @@ export const API_ROUTES = {
     ADDRESSES: (slug: string) => `/api/v1/shops/${slug}/addresses`,
     ADDRESS: (slug: string, addressId: string) =>
       `/api/v1/shops/${slug}/addresses/${addressId}`,
+    COUPONS: (slug: string) => `/api/v1/shops/${slug}/coupons`,
+    COUPON: (slug: string, couponId: string) =>
+      `/api/v1/shops/${slug}/coupons/${couponId}`,
+    COUPONS_VALIDATE: (slug: string) => `/api/v1/shops/${slug}/coupons/validate`,
+    REVIEWS: (slug: string, productId: string) =>
+      `/api/v1/shops/${slug}/products/${productId}/reviews`,
+    REVIEW_REPLY: (slug: string, reviewId: string) =>
+      `/api/v1/shops/${slug}/reviews/${reviewId}/reply`,
+    REVIEW_DELETE: (slug: string, reviewId: string) =>
+      `/api/v1/shops/${slug}/reviews/${reviewId}`,
     ATTRIBUTES: (slug: string) => `/api/v1/shops/${slug}/attributes`,
     ATTRIBUTE_OPTIONS: (slug: string, attrId: string) =>
       `/api/v1/shops/${slug}/attributes/${attrId}/options`,
@@ -90,6 +100,8 @@ export const ROUTES = {
     `/dashboard/${slug}/products/${productId}/edit`,
   DASHBOARD_CATEGORIES: (slug: string) => `/dashboard/${slug}/categories`,
   DASHBOARD_SETTINGS: (slug: string) => `/dashboard/${slug}/settings`,
+  DASHBOARD_COUPONS: (slug: string) => `/dashboard/${slug}/coupons`,
+  DASHBOARD_REVIEWS: (slug: string) => `/dashboard/${slug}/reviews`,
 } as const;
 
 /** localStorage / cookie key names for auth tokens. */
