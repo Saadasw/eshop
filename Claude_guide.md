@@ -1,6 +1,6 @@
 # Claude Guide — E-Shop Platform Status & Roadmap
 
-> **Last updated:** 2026-03-05 (Phase 6A complete — backend + frontend)
+> **Last updated:** 2026-03-05 (Phase 6B-6C complete — backend)
 > **Author:** Claude (AI Assistant)
 > **Purpose:** This document is a living conversation between Claude and you (the developer). It tells you exactly where the project stands, what's been built, what's missing, what's good, what needs fixing, and the precise path forward — phase by phase, file by file.
 
@@ -32,7 +32,8 @@
     │  BACKEND CART+ORDERS    ████████████████████████  100%   │
     │  BACKEND PAYMENTS       ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  BACKEND PHASE 6A       ████████████████████████  100%   │
-    │  BACKEND PHASE 6B-6D   ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
+    │  BACKEND PHASE 6B-6C   ████████████████████████  100%   │
+    │  BACKEND PHASE 6D      ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  FRONTEND FOUNDATION    ████████████████████████  100%   │
     │  FRONTEND AUTH          ████████████████████████  100%   │
     │  FRONTEND STOREFRONT    ████████████████████████  100%   │
@@ -42,11 +43,11 @@
     │  FRONTEND ADMIN         ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  TESTING                ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     ├──────────────────────────────────────────────────────────┤
-    │  OVERALL                ████████████████░░░░░░░░  ~65%  │
+    │  OVERALL                ██████████████████░░░░░░  ~72%  │
     └──────────────────────────────────────────────────────────┘
 ```
 
-**In plain English:** The customer-facing app, shop owner dashboard, and coupon/review features are all complete. Customers can browse shops, buy products, apply coupon codes at checkout, view product reviews, and track orders. Shop owners can manage products, process orders, handle categories, create/manage coupons, reply to reviews, and configure settings. What's left: admin panel, payments backend (bKash/Nagad), and Phase 6B-6D features (refunds, notifications, addresses, wishlist, bulk operations). No tests exist.
+**In plain English:** The customer-facing app, shop owner dashboard, coupon/review features, and Phase 6B-6C backend are all complete. Customers can browse shops, buy products, apply coupon codes at checkout, view product reviews, manage delivery addresses, maintain wishlists, and track orders. Shop owners can manage products, process orders, handle categories, create/manage coupons, reply to reviews, process refunds, view payouts, and configure settings. Notifications are generated for key events. What's left: frontend integration for 6B-6C features, admin panel (Phase 6D), payments backend (bKash/Nagad), and bulk operations. No tests exist.
 
 ---
 
@@ -93,7 +94,7 @@ backend/app/
 │   ├── audit.py                 ✅ AuditLog, BulkJob, PlatformSetting
 │   └── archive.py               ✅ OrderArchive, PaymentArchive, AuditLogArchive
 │
-├── schemas/                     ✅ 8 domain schema files + common
+├── schemas/                     ✅ 13 domain schema files + common
 │   ├── common.py                ✅ PaginatedResponse, ErrorResponse
 │   ├── user.py                  ✅ UserCreate, UserRead, RegisterRequest, LoginRequest, TokenPair, AuthResponse
 │   ├── shop.py                  ✅ ShopCreate, ShopRead, ShopUpdate, ShopConfigRead/Update, StaffCreate/Read, etc.
@@ -101,9 +102,14 @@ backend/app/
 │   ├── cart.py                  ✅ CartRead, CartItemAdd, CartItemRead
 │   ├── order.py                 ✅ OrderCreate, OrderRead, OrderItemRead, OrderStatusUpdate
 │   ├── coupon.py                ✅ CouponCreate, CouponRead, CouponUpdate, CouponValidateRequest/Response, CouponUsageRead
-│   └── review.py                ✅ ReviewCreate, ReviewRead, ReviewReply
+│   ├── review.py                ✅ ReviewCreate, ReviewRead, ReviewReply
+│   ├── address.py               ✅ CustomerAddressCreate, CustomerAddressUpdate, CustomerAddressRead
+│   ├── wishlist.py              ✅ WishlistItemAdd, WishlistItemRead
+│   ├── notification.py          ✅ NotificationRead, NotificationMarkRead, UnreadCountResponse
+│   ├── refund.py                ✅ RefundRequest, RefundStatusUpdate, RefundRead, RefundItemRead
+│   └── payout.py                ✅ PayoutCreate, PayoutStatusUpdate, PayoutRead
 │
-├── services/                    ✅ 8 service files implemented
+├── services/                    ✅ 13 service files implemented
 │   ├── auth_service.py          ✅ 394 lines — register, login, refresh, logout, lockout
 │   ├── shop_service.py          ✅ ~720 lines — CRUD, config, staff, payment methods, delivery zones, list endpoints
 │   ├── product_service.py       ✅ 703 lines — product/variant CRUD, media upload, price sync
@@ -111,10 +117,15 @@ backend/app/
 │   ├── cart_service.py          ✅ 346 lines — add/remove items, stock check, guest merge
 │   ├── order_service.py         ✅ 522 lines — cart→order, snapshots, state machine, status history
 │   ├── coupon_service.py        ✅ ~250 lines — CRUD, validate (active/dates/usage limits/min order), calculate discount, record usage
-│   └── review_service.py        ✅ ~215 lines — create (requires delivered order), list with customer names, reply, soft-delete
+│   ├── review_service.py        ✅ ~215 lines — create (requires delivered order), list with customer names, reply, soft-delete
+│   ├── address_service.py       ✅ ~140 lines — CRUD, default management (unset others when setting default)
+│   ├── wishlist_service.py      ✅ ~145 lines — add/remove/list with denormalized product info
+│   ├── notification_service.py  ✅ ~155 lines — create (internal helper), list, unread count, mark read/all
+│   ├── refund_service.py        ✅ ~225 lines — request, list, status update with state machine, restock items
+│   └── payout_service.py        ✅ ~175 lines — calculate (orders-commissions-refunds), create, list, status update
 │
 ├── api/
-│   ├── router.py                ✅ Master router (8 sub-routers)
+│   ├── router.py                ✅ Master router (13 sub-routers)
 │   └── v1/
 │       ├── auth.py              ✅ 104 lines — register, login, logout, refresh
 │       ├── shops.py             ✅ ~400 lines — CRUD, config, staff, payment, delivery zones, list endpoints
@@ -123,7 +134,12 @@ backend/app/
 │       ├── cart.py              ✅ 88 lines — cart operations
 │       ├── orders.py            ✅ 203 lines — place order, list, status update
 │       ├── coupons.py           ✅ ~130 lines — CRUD + POST validate
-│       └── reviews.py           ✅ ~95 lines — create, list, reply, soft-delete
+│       ├── reviews.py           ✅ ~95 lines — create, list, reply, soft-delete
+│       ├── addresses.py         ✅ ~90 lines — CRUD for customer delivery addresses
+│       ├── wishlist.py          ✅ ~70 lines — add, remove, list wishlist items
+│       ├── notifications.py     ✅ ~85 lines — list, unread count, mark read, mark all read
+│       ├── refunds.py           ✅ ~95 lines — request (customer), list/update (owner/staff)
+│       └── payouts.py           ✅ ~80 lines — list (owner), create/update (admin)
 │
 ├── core/
 │   ├── security.py              ✅ JWT encode/decode, bcrypt hashing
@@ -335,11 +351,11 @@ frontend/src/
 | 5 | — | — | `webhooks/nagad.py` | Nagad callback webhook |
 | ~~6A~~ | ~~`coupon_service.py`~~ | ~~`coupon.py`~~ | ~~`coupons.py`~~ | **DONE** — Coupon CRUD, validation, usage tracking |
 | ~~6A~~ | ~~`review_service.py`~~ | ~~`review.py`~~ | ~~`reviews.py`~~ | **DONE** — Review CRUD, shop reply, rating sync |
-| 6B | `refund_service.py` | `refund.py` | `refunds.py` | Refund request/approve/reject/process flow |
-| 6B | `payout_service.py` | `payout.py` | `payouts.py` | Payout calculation, commission deduction |
-| 6C | `notification_service.py` | `notification.py` | `notifications.py` | In-app notifications, unread count, mark read |
-| 6C | `address_service.py` | `address.py` | `addresses.py` | Customer address CRUD, default management |
-| 6C | `wishlist_service.py` | `wishlist.py` | `wishlist.py` | Add/remove/list wishlist items |
+| ~~6B~~ | ~~`refund_service.py`~~ | ~~`refund.py`~~ | ~~`refunds.py`~~ | **DONE** — Refund request/approve/reject/process, restock items |
+| ~~6B~~ | ~~`payout_service.py`~~ | ~~`payout.py`~~ | ~~`payouts.py`~~ | **DONE** — Payout calculation (orders-commissions-refunds), status management |
+| ~~6C~~ | ~~`notification_service.py`~~ | ~~`notification.py`~~ | ~~`notifications.py`~~ | **DONE** — In-app notifications, unread count, mark read/all |
+| ~~6C~~ | ~~`address_service.py`~~ | ~~`address.py`~~ | ~~`addresses.py`~~ | **DONE** — Customer address CRUD, default management, BD phone validation |
+| ~~6C~~ | ~~`wishlist_service.py`~~ | ~~`wishlist.py`~~ | ~~`wishlist.py`~~ | **DONE** — Add/remove/list with denormalized product info |
 | 6D | `admin_service.py` | `admin.py` | `admin.py` | Shop approval, user management, platform settings, audit logs |
 | 6D | `bulk_service.py` | `bulk.py` | `bulk.py` | CSV import/export, job tracking |
 
@@ -416,17 +432,11 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 │  ✅ DONE: Backend Phases 1-4 (Foundation→Cart+Orders)    │
 │  ✅ DONE: Frontend Phases 1-4B (Foundation→Dashboard)    │
 │  ✅ DONE: Phase 6A (Coupons + Reviews — BE + FE)         │
-│  6 backend files + 11 frontend files, ~1,900 lines      │
+│  ✅ DONE: Phase 6B-6C Backend (Refunds, Payouts,         │
+│  Notifications, Addresses, Wishlist) — 15 files          │
 └────────────────────────┬────────────────────────────────┘
                          │
                     YOU ARE HERE
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│  Backend Phase 6B-6C (Refunds, Notifications,           │
-│  Addresses, Wishlist) + Frontend integration            │
-│  Why: Quality-of-life features for a real product       │
-└────────────────────────┬────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
@@ -581,15 +591,29 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 
 ---
 
-### Backend Phase 6B-6C: Refunds, Notifications, Addresses, Wishlist
+### Backend Phase 6B-6C: Refunds, Notifications, Addresses, Wishlist — ✅ COMPLETE
 
-| Service | Route | Key Logic |
-|---------|-------|-----------|
-| `refund_service.py` | `POST /orders/{id}/refund`, `GET/PATCH /shops/{slug}/refunds` | Request → approve → process → complete/fail. Restock items if needed. |
-| `payout_service.py` | `GET /shops/{slug}/payouts`, `POST/PATCH /admin/payouts` | Sum order totals - commissions - refunds per period |
-| `notification_service.py` | `GET /notifications`, `PATCH /{id}/read`, `POST /mark-all-read` | Internal helper called by other services on events |
-| `address_service.py` | `POST/GET/PATCH/DELETE /addresses` | CRUD, set default (unset others), BD phone validation |
-| `wishlist_service.py` | `POST/GET/DELETE /wishlist` | Add/remove/list, unique (user_id, product_id) |
+**Status:** Done (2026-03-05). 15 new backend files, ~1,500 lines.
+
+**Phase 6B — Refunds & Payouts (6 files):**
+- `schemas/refund.py` — RefundRequest (items with quantities), RefundStatusUpdate, RefundRead, RefundItemRead
+- `services/refund_service.py` — Request refund (validates order status + item quantities), list/get by shop, update status with state machine, restock items, notify customer
+- `api/v1/refunds.py` — POST `/orders/{id}/refund` (customer), GET/GET/{id}/PATCH `/shops/{slug}/refunds` (owner/staff)
+- `schemas/payout.py` — PayoutCreate (shop, period, method, commission rate), PayoutStatusUpdate, PayoutRead
+- `services/payout_service.py` — Calculate payout (delivered orders - commission - refunds), create, list, update status, notify owner
+- `api/v1/payouts.py` — GET `/shops/{slug}/payouts` (owner), POST/PATCH `/admin/payouts` (admin)
+
+**Phase 6C — Notifications, Addresses, Wishlist (9 files):**
+- `schemas/address.py`, `services/address_service.py`, `api/v1/addresses.py` — CRUD + default management + BD phone validation
+- `schemas/wishlist.py`, `services/wishlist_service.py`, `api/v1/wishlist.py` — Add/remove/list with denormalized product info
+- `schemas/notification.py`, `services/notification_service.py`, `api/v1/notifications.py` — List, unread count, mark read/all
+
+**Key features:**
+- Refund state machine: requested → approved → processing → completed|failed|rejected
+- Payout calculation: gross - commission - refund deductions
+- Notification service is internal helper (no commit) — called by other services
+- Address is_default management: auto-unsets other defaults
+- Router now has 13 sub-routers, ~90+ API endpoints
 
 ---
 
@@ -631,10 +655,11 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 3. ~~**Cart + checkout + order pages** (complete purchase flow) — ~2 sessions~~ **DONE**
 4. ~~**Shop owner dashboard** (manage products & orders) — ~3 sessions~~ **DONE**
 5. ~~**Coupons + reviews backend + frontend** (storefront polish) — ~2 sessions~~ **DONE**
-6. **Phase 6B-6C** (refunds, notifications, addresses, wishlist) — ~3 sessions ← **NEXT**
-7. **Admin panel + bulk operations** (shop approval, users, CSV import) — ~2 sessions
-8. **Payments** (bKash/Nagad integration) — ~1 session
-9. **Testing** — ~2 sessions
+6. ~~**Phase 6B-6C backend** (refunds, notifications, addresses, wishlist) — 1 session~~ **DONE**
+7. **Phase 6B-6C frontend integration** (hooks, API wrappers, UI) — ~1 session ← **NEXT**
+8. **Admin panel + bulk operations** (shop approval, users, CSV import) — ~2 sessions
+9. **Payments** (bKash/Nagad integration) — ~1 session
+10. **Testing** — ~2 sessions
 
 ---
 
@@ -648,8 +673,8 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 | ~~Dashboard (FE + BE)~~ | ~~35+4 files~~ | ~~4,500~~ | ~~3~~ | **DONE** |
 | ~~Coupons + reviews (BE)~~ | ~~6 files~~ | ~~~640~~ | ~~1~~ | **DONE** |
 | ~~Coupons + reviews (FE)~~ | ~~11 files~~ | ~~~1,260~~ | ~~1~~ | **DONE** |
-| Phase 6B-6C (BE) | 10 files | ~1,200 | 2 | **NEXT** |
-| Phase 6B-6C (FE integration) | ~8 files | ~800 | 1 | pending |
+| ~~Phase 6B-6C (BE)~~ | ~~15 files~~ | ~~1,500~~ | ~~1~~ | **DONE** |
+| Phase 6B-6C (FE integration) | ~8 files | ~800 | 1 | **NEXT** |
 | Admin backend + frontend | ~10 files | ~1,500 | 2 | pending |
 | Bulk operations | 3 files | ~400 | 1 | pending |
 | Testing | ~15 files | ~2,000 | 2 | pending |
@@ -710,6 +735,6 @@ I'll follow the CLAUDE.md patterns, create the files in the right order, and wir
 
 The platform is feature-rich and growing. Customers can browse shops, view products, apply coupon codes, read reviews, add to cart, checkout with COD, and track orders. Shop owners can manage products (with variants and media), process orders (with status transitions), organize categories, create/manage discount coupons, reply to customer reviews, and configure their store (delivery zones, payment methods, staff). The codebase is at ~190 files and ~20,000 lines with consistent patterns throughout.
 
-**My recommendation: Build Backend Phase 6B-6C next.** This adds refunds (request/approve/process flow), notifications (in-app alerts for order events), customer address management, and wishlist. These are quality-of-life features that make the platform feel production-ready. After 6B-6C, build the admin panel (Phase 6D + Frontend Phase 5) for platform management, then payments (bKash/Nagad), then testing.
+**My recommendation: Build Frontend Phase 6B-6C integration next.** The backend for refunds, payouts, notifications, addresses, and wishlist is complete. Next, create the frontend hooks, API wrappers, and UI components to consume these endpoints. After that, build the admin panel (Phase 6D + Frontend Phase 5) for platform management, then payments (bKash/Nagad), then testing.
 
 Let's build.
