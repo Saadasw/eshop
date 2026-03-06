@@ -32,5 +32,8 @@ out/
 htmlcov/
 .pytest_cache/
 
+# Local file uploads
+uploads/
+
 # Misc
 *.log

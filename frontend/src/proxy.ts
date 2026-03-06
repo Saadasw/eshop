@@ -9,8 +9,12 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function proxy(request: NextRequest) {
-  /** Refresh Supabase auth cookies on each request. */
-  let supabaseResponse = NextResponse.next({ request });
+  /** Refresh Supabase auth cookies on each request. Skipped in local auth mode. */
+  const supabaseResponse = NextResponse.next({ request });
+
+  if (process.env.NEXT_PUBLIC_AUTH_PROVIDER === "local") {
+    return supabaseResponse;
+  }
 
   createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,9 +28,9 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          supabaseResponse = NextResponse.next({ request });
+          const response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            response.cookies.set(name, value, options),
           );
         },
       },

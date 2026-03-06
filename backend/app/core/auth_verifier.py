@@ -2,11 +2,13 @@
 
 AuthVerifier is a Protocol that any auth provider must implement.
 SupabaseAuthVerifier is the default implementation using Supabase Auth.
+LocalAuthVerifier bypasses external verification for local development.
 
 Only used during register/login to verify the external provider's token.
 After verification, our own JWT is issued — all subsequent requests use our JWT.
 """
 
+import uuid
 from typing import Protocol
 
 import httpx
@@ -73,3 +75,28 @@ class SupabaseAuthVerifier:
                 "email": data.get("email", ""),
                 "phone": data.get("phone", ""),
             }
+
+
+class LocalAuthVerifier:
+    """Local dev auth verifier — skips external token verification.
+
+    For local development without Supabase. The 'supabase_token' field
+    in register/login requests can be set to any non-empty string (e.g. "local").
+    User identity comes from the request body (email, phone), not from the token.
+    """
+
+    async def verify_token(self, token: str) -> dict:
+        """Accept any token and return a generated user identity.
+
+        Args:
+            token: Ignored in local mode (can be any string).
+
+        Returns:
+            Dict with a generated 'sub' UUID and empty email/phone
+            (the auth service uses email/phone from the request body).
+        """
+        return {
+            "sub": str(uuid.uuid4()),
+            "email": "",
+            "phone": "",
+        }

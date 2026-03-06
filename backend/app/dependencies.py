@@ -8,9 +8,10 @@ from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth_verifier import SupabaseAuthVerifier
+from app.config import settings
+from app.core.auth_verifier import LocalAuthVerifier, SupabaseAuthVerifier
 from app.core.security import decode_token
-from app.core.storage import SupabaseStorage, StorageBackend
+from app.core.storage import LocalStorage, SupabaseStorage, StorageBackend
 from app.db.session import get_db
 from app.models.shop import Shop
 from app.models.user import User
@@ -92,18 +93,28 @@ async def get_current_shop(slug: str, db: AsyncSession = Depends(get_db)) -> Sho
 
 
 def get_auth_service() -> AuthService:
-    """Provide an AuthService instance with the default Supabase verifier.
+    """Provide an AuthService with the configured auth verifier.
+
+    Uses LocalAuthVerifier when AUTH_PROVIDER="local", otherwise Supabase.
 
     Returns:
         Configured AuthService.
     """
-    return AuthService(auth_verifier=SupabaseAuthVerifier())
+    if settings.AUTH_PROVIDER == "local":
+        verifier = LocalAuthVerifier()
+    else:
+        verifier = SupabaseAuthVerifier()
+    return AuthService(auth_verifier=verifier)
 
 
 def get_storage() -> StorageBackend:
-    """Provide the default storage backend.
+    """Provide the configured storage backend.
+
+    Uses LocalStorage when STORAGE_PROVIDER="local", otherwise Supabase.
 
     Returns:
-        Configured SupabaseStorage instance.
+        Configured storage backend instance.
     """
+    if settings.STORAGE_PROVIDER == "local":
+        return LocalStorage()
     return SupabaseStorage()

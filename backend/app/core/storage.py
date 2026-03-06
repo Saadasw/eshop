@@ -2,8 +2,11 @@
 
 StorageBackend is a Protocol that any storage provider must implement.
 SupabaseStorage is the default implementation using Supabase Storage.
+LocalStorage stores files on the local filesystem for development.
 """
 
+import os
+from pathlib import Path
 from typing import Protocol
 
 import httpx
@@ -110,3 +113,56 @@ class SupabaseStorage:
         async with httpx.AsyncClient() as client:
             response = await client.delete(url, headers=self.headers)
             response.raise_for_status()
+
+
+class LocalStorage:
+    """Local filesystem storage for development without Supabase.
+
+    Files are stored under LOCAL_STORAGE_DIR/{bucket}/{path} and served
+    via FastAPI's StaticFiles mount at LOCAL_STORAGE_URL.
+    """
+
+    def __init__(self) -> None:
+        """Initialize with local storage directory from settings."""
+        self.base_dir = Path(settings.LOCAL_STORAGE_DIR)
+        self.base_url = settings.LOCAL_STORAGE_URL.rstrip("/")
+
+    async def upload(self, bucket: str, path: str, file: bytes, content_type: str) -> str:
+        """Write a file to the local filesystem.
+
+        Args:
+            bucket: Storage bucket name (becomes a subdirectory).
+            path: File path within the bucket.
+            file: Raw file bytes.
+            content_type: MIME type (unused for local files).
+
+        Returns:
+            Public URL for the file.
+        """
+        file_path = self.base_dir / bucket / path
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_bytes(file)
+        return await self.get_url(bucket, path)
+
+    async def get_url(self, bucket: str, path: str) -> str:
+        """Get the local URL for a stored file.
+
+        Args:
+            bucket: Storage bucket name.
+            path: File path within the bucket.
+
+        Returns:
+            URL served by FastAPI StaticFiles.
+        """
+        return f"{self.base_url}/{bucket}/{path}"
+
+    async def delete(self, bucket: str, path: str) -> None:
+        """Delete a file from local filesystem.
+
+        Args:
+            bucket: Storage bucket name.
+            path: File path within the bucket.
+        """
+        file_path = self.base_dir / bucket / path
+        if file_path.exists():
+            os.remove(file_path)

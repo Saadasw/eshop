@@ -9,10 +9,15 @@ class Settings(BaseSettings):
     All values are read from environment variables (or a .env file).
     """
 
-    # --- Supabase ---
-    SUPABASE_URL: str
-    SUPABASE_ANON_KEY: str
-    SUPABASE_SERVICE_ROLE_KEY: str
+    # --- Provider Switches ---
+    # Set to "local" to use local Postgres + filesystem instead of Supabase
+    AUTH_PROVIDER: str = "supabase"      # "supabase" | "local"
+    STORAGE_PROVIDER: str = "supabase"   # "supabase" | "local"
+
+    # --- Supabase (required when AUTH_PROVIDER/STORAGE_PROVIDER = "supabase") ---
+    SUPABASE_URL: str = ""
+    SUPABASE_ANON_KEY: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
 
     # --- Database ---
     DATABASE_URL: str  # postgresql+asyncpg://...
@@ -32,6 +37,10 @@ class Settings(BaseSettings):
 
     # --- CORS ---
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+
+    # --- Local Storage (used when STORAGE_PROVIDER = "local") ---
+    LOCAL_STORAGE_DIR: str = "uploads"
+    LOCAL_STORAGE_URL: str = "http://localhost:8000/uploads"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

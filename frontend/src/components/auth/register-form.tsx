@@ -64,25 +64,31 @@ export function RegisterForm() {
     setIsSubmitting(true);
 
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        phone: `+88${phone}`,
-      });
+      let supabaseToken = "local";
 
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
+      if (process.env.NEXT_PUBLIC_AUTH_PROVIDER !== "local") {
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          phone: `+88${phone}`,
+        });
 
-      if (!data.session) {
-        toast.error("Failed to create auth session");
-        return;
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
+
+        if (!data.session) {
+          toast.error("Failed to create auth session");
+          return;
+        }
+
+        supabaseToken = data.session.access_token;
       }
 
       const response = await register({
-        supabase_token: data.session.access_token,
+        supabase_token: supabaseToken,
         full_name: fullName,
         email,
         phone,

@@ -54,19 +54,25 @@ export function LoginForm() {
     setIsSubmitting(true);
 
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      let supabaseToken = "local";
 
-      if (error) {
-        toast.error(error.message);
-        return;
+      if (process.env.NEXT_PUBLIC_AUTH_PROVIDER !== "local") {
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
+
+        supabaseToken = data.session.access_token;
       }
 
       const response = await login({
-        supabase_token: data.session.access_token,
+        supabase_token: supabaseToken,
         user_agent: navigator.userAgent,
       });
 
