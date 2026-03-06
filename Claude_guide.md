@@ -1,6 +1,6 @@
 # Claude Guide — E-Shop Platform Status & Roadmap
 
-> **Last updated:** 2026-03-05 (Phase 6B-6C complete — backend + frontend)
+> **Last updated:** 2026-03-06 (Phase 6D backend complete — admin + bulk)
 > **Author:** Claude (AI Assistant)
 > **Purpose:** This document is a living conversation between Claude and you (the developer). It tells you exactly where the project stands, what's been built, what's missing, what's good, what needs fixing, and the precise path forward — phase by phase, file by file.
 
@@ -33,7 +33,7 @@
     │  BACKEND PAYMENTS       ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  BACKEND PHASE 6A       ████████████████████████  100%   │
     │  BACKEND PHASE 6B-6C   ████████████████████████  100%   │
-    │  BACKEND PHASE 6D      ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
+    │  BACKEND PHASE 6D      ████████████████████████  100%   │
     │  FRONTEND FOUNDATION    ████████████████████████  100%   │
     │  FRONTEND AUTH          ████████████████████████  100%   │
     │  FRONTEND STOREFRONT    ████████████████████████  100%   │
@@ -44,11 +44,11 @@
     │  FRONTEND ADMIN         ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     │  TESTING                ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     ├──────────────────────────────────────────────────────────┤
-    │  OVERALL                ████████████████████░░░░  ~78%  │
+    │  OVERALL                █████████████████████░░░  ~83%  │
     └──────────────────────────────────────────────────────────┘
 ```
 
-**In plain English:** The customer-facing app, shop owner dashboard, and all Phase 6A-6C features (backend + frontend) are complete. Customers can browse shops, buy products, apply coupon codes at checkout, view product reviews, manage delivery addresses, maintain wishlists, receive notifications, request refunds on delivered orders, and track orders. Shop owners can manage products, process orders, handle categories, create/manage coupons, reply to reviews, process refunds, view payouts, and configure settings. The navbar has a notification bell with unread count, wishlist heart buttons on products, and user dropdown links to Wishlist and Addresses pages. What's left: admin panel (Phase 6D backend + frontend), payments backend (bKash/Nagad), bulk operations, and testing.
+**In plain English:** The customer-facing app, shop owner dashboard, and all Phase 6A-6D backend features are complete. Customers can browse shops, buy products, apply coupon codes at checkout, view product reviews, manage delivery addresses, maintain wishlists, receive notifications, request refunds on delivered orders, and track orders. Shop owners can manage products, process orders, handle categories, create/manage coupons, reply to reviews, process refunds, view payouts, bulk import/export products via CSV, and configure settings. Admins can approve/reject/suspend shops, manage users, configure platform settings, view audit logs, and manage payouts. The navbar has a notification bell with unread count, wishlist heart buttons on products, and user dropdown links to Wishlist and Addresses pages. What's left: admin frontend panel (Phase 5 frontend), payments backend (bKash/Nagad), and testing.
 
 ---
 
@@ -95,7 +95,7 @@ backend/app/
 │   ├── audit.py                 ✅ AuditLog, BulkJob, PlatformSetting
 │   └── archive.py               ✅ OrderArchive, PaymentArchive, AuditLogArchive
 │
-├── schemas/                     ✅ 13 domain schema files + common
+├── schemas/                     ✅ 15 domain schema files + common
 │   ├── common.py                ✅ PaginatedResponse, ErrorResponse
 │   ├── user.py                  ✅ UserCreate, UserRead, RegisterRequest, LoginRequest, TokenPair, AuthResponse
 │   ├── shop.py                  ✅ ShopCreate, ShopRead, ShopUpdate, ShopConfigRead/Update, StaffCreate/Read, etc.
@@ -108,9 +108,11 @@ backend/app/
 │   ├── wishlist.py              ✅ WishlistItemAdd, WishlistItemRead
 │   ├── notification.py          ✅ NotificationRead, NotificationMarkRead, UnreadCountResponse
 │   ├── refund.py                ✅ RefundRequest, RefundStatusUpdate, RefundRead, RefundItemRead
-│   └── payout.py                ✅ PayoutCreate, PayoutStatusUpdate, PayoutRead
+│   ├── payout.py                ✅ PayoutCreate, PayoutStatusUpdate, PayoutRead
+│   ├── admin.py                 ✅ ShopApprovalRequest, ShopAdminRead, UserAdminRead/Update, PlatformSettingRead/Update, AuditLogRead, AdminDashboardStats
+│   └── bulk.py                  ✅ BulkJobRead
 │
-├── services/                    ✅ 13 service files implemented
+├── services/                    ✅ 15 service files implemented
 │   ├── auth_service.py          ✅ 394 lines — register, login, refresh, logout, lockout
 │   ├── shop_service.py          ✅ ~720 lines — CRUD, config, staff, payment methods, delivery zones, list endpoints
 │   ├── product_service.py       ✅ 703 lines — product/variant CRUD, media upload, price sync
@@ -123,10 +125,12 @@ backend/app/
 │   ├── wishlist_service.py      ✅ ~145 lines — add/remove/list with denormalized product info
 │   ├── notification_service.py  ✅ ~155 lines — create (internal helper), list, unread count, mark read/all
 │   ├── refund_service.py        ✅ ~225 lines — request, list, status update with state machine, restock items
-│   └── payout_service.py        ✅ ~175 lines — calculate (orders-commissions-refunds), create, list, status update
+│   ├── payout_service.py        ✅ ~175 lines — calculate (orders-commissions-refunds), create, list, status update
+│   ├── admin_service.py         ✅ ~310 lines — shop approval (state machine + audit), user mgmt, platform settings, audit logs, dashboard stats
+│   └── bulk_service.py          ✅ ~230 lines — CSV product import (validate + bulk insert), export, job tracking
 │
 ├── api/
-│   ├── router.py                ✅ Master router (13 sub-routers)
+│   ├── router.py                ✅ Master router (15 sub-routers)
 │   └── v1/
 │       ├── auth.py              ✅ 104 lines — register, login, logout, refresh
 │       ├── shops.py             ✅ ~400 lines — CRUD, config, staff, payment, delivery zones, list endpoints
@@ -140,7 +144,9 @@ backend/app/
 │       ├── wishlist.py          ✅ ~70 lines — add, remove, list wishlist items
 │       ├── notifications.py     ✅ ~85 lines — list, unread count, mark read, mark all read
 │       ├── refunds.py           ✅ ~95 lines — request (customer), list/update (owner/staff)
-│       └── payouts.py           ✅ ~80 lines — list (owner), create/update (admin)
+│       ├── payouts.py           ✅ ~80 lines — list (owner), create/update (admin)
+│       ├── admin.py             ✅ ~155 lines — stats, shop approval, user mgmt, settings, audit logs
+│       └── bulk.py              ✅ ~105 lines — CSV import/export, job list/detail
 │
 ├── core/
 │   ├── security.py              ✅ JWT encode/decode, bcrypt hashing
@@ -382,8 +388,8 @@ frontend/src/
 | ~~6C~~ | ~~`notification_service.py`~~ | ~~`notification.py`~~ | ~~`notifications.py`~~ | **DONE** — In-app notifications, unread count, mark read/all |
 | ~~6C~~ | ~~`address_service.py`~~ | ~~`address.py`~~ | ~~`addresses.py`~~ | **DONE** — Customer address CRUD, default management, BD phone validation |
 | ~~6C~~ | ~~`wishlist_service.py`~~ | ~~`wishlist.py`~~ | ~~`wishlist.py`~~ | **DONE** — Add/remove/list with denormalized product info |
-| 6D | `admin_service.py` | `admin.py` | `admin.py` | Shop approval, user management, platform settings, audit logs |
-| 6D | `bulk_service.py` | `bulk.py` | `bulk.py` | CSV import/export, job tracking |
+| ~~6D~~ | ~~`admin_service.py`~~ | ~~`admin.py`~~ | ~~`admin.py`~~ | **DONE** — Shop approval, user management, platform settings, audit logs, dashboard stats |
+| ~~6D~~ | ~~`bulk_service.py`~~ | ~~`bulk.py`~~ | ~~`bulk.py`~~ | **DONE** — CSV product import/export, job tracking |
 
 ### 3.2 Backend — Missing Utilities
 
@@ -406,7 +412,7 @@ The `/api/v1/users/me` endpoint (GET, PATCH, DELETE for the current user's profi
 | ~~**Phase 4B: Dashboard**~~ | ~~Shop owner dashboard with sidebar~~ | **DONE** (35 new files + 4 backend, ~4,500 lines) |
 | ~~**Phase 6A: Coupons+Reviews**~~ | ~~Backend+frontend for coupons and reviews~~ | **DONE** (6 BE + 11 FE files, ~1,900 lines) |
 | ~~**Phase 6B-6C: Frontend**~~ | ~~Refunds, payouts, notifications, addresses, wishlist UI~~ | **DONE** (22 new + 6 modified files, ~2,200 lines) |
-| **Phase 5: Admin** | Admin panel with sidebar | ~5 pages, ~10 components |
+| **Phase 5: Admin (FE)** | Admin panel with sidebar (backend ready) | ~5 pages, ~10 components |
 
 ### 3.5 Testing — Zero Coverage
 
@@ -442,7 +448,7 @@ The `/api/v1/users/me` endpoint (GET, PATCH, DELETE for the current user's profi
 
 3. **No custom exception classes.** Services raise `HTTPException` directly. This works fine for now, but if error handling gets complex, consider `core/exceptions.py` with domain-specific exceptions.
 
-4. **No audit logging in services yet.** The `AuditLog` model exists, but no service creates audit records. This should be added when you build Phase 6D (admin), or earlier if you want to track mutations.
+4. **Audit logging now active.** The `admin_service.py` creates `AuditLog` entries for shop status changes, user updates, and platform settings changes. Other services (order, product) don't log yet — add as needed.
 
 5. **Empty `utils/` directory.** The backend has no utility files yet. You'll create them as needed — don't pre-build utilities you don't need yet (YAGNI).
 
@@ -461,14 +467,14 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 │  ✅ DONE: Phase 6A (Coupons + Reviews — BE + FE)         │
 │  ✅ DONE: Phase 6B-6C (Refunds, Payouts, Notifications,  │
 │  Addresses, Wishlist — Backend + Frontend) — 37 files    │
+│  ✅ DONE: Backend Phase 6D (Admin + Bulk) — 6 new files  │
 └────────────────────────┬────────────────────────────────┘
                          │
                     YOU ARE HERE
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Backend Phase 6D (Admin + Bulk)                        │
-│  + Frontend Phase 5 (Admin Panel)                       │
+│  Frontend Phase 5 (Admin Panel)                         │
 │  Why: Platform management — needed before launch        │
 └────────────────────────┬────────────────────────────────┘
                          │
@@ -640,7 +646,7 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 - Payout calculation: gross - commission - refund deductions
 - Notification service is internal helper (no commit) — called by other services
 - Address is_default management: auto-unsets other defaults
-- Router now has 13 sub-routers, ~90+ API endpoints
+- Router had 13 sub-routers, ~90+ API endpoints (now 15 routers, ~100+ endpoints after Phase 6D)
 
 ---
 
@@ -669,12 +675,47 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 
 ---
 
-### Backend Phase 6D + Frontend Phase 5: Admin
+### Backend Phase 6D: Admin + Bulk Operations — ✅ COMPLETE
 
-| Service | Route | Key Logic |
-|---------|-------|-----------|
-| `admin_service.py` | `PATCH /admin/shops/{id}/status`, `GET/PATCH /admin/users`, `GET/PUT /admin/settings`, `GET /admin/audit-logs` | Shop approval workflow, user management, platform config |
-| `bulk_service.py` | `POST /shops/{slug}/bulk/import`, `POST /bulk/export`, `GET /bulk/jobs` | CSV parsing, bulk insert, file upload to storage |
+**Status:** Done (2026-03-06). 6 new backend files + 1 modified, ~935 lines.
+
+**Admin (4 files):**
+- `schemas/admin.py` (~105 lines) — ShopApprovalRequest, ShopAdminRead, UserAdminRead/Update, PlatformSettingRead/Update, AuditLogRead, AdminDashboardStats
+- `services/admin_service.py` (~310 lines) — Shop status update (state machine + audit log + owner notification), user list/update (with self-modification guard), platform settings upsert, audit log viewer with filters, dashboard stats (users, shops, orders, revenue)
+- `api/v1/admin.py` (~155 lines) — 8 endpoints: `GET /admin/stats`, `GET/PATCH /admin/shops`, `PATCH /admin/shops/{id}/status`, `GET/PATCH /admin/users`, `GET/PUT /admin/settings`, `GET /admin/audit-logs`
+
+**Bulk (2 files):**
+- `schemas/bulk.py` (~30 lines) — BulkJobRead
+- `services/bulk_service.py` (~230 lines) — CSV product import (validate name/SKU/price/stock, check SKU uniqueness, create product + default variant), product export (generate CSV via StorageBackend), job list/detail
+- `api/v1/bulk.py` (~105 lines) — 4 endpoints: `POST /shops/{slug}/bulk/import`, `POST /shops/{slug}/bulk/export`, `GET /shops/{slug}/bulk/jobs`, `GET /shops/{slug}/bulk/jobs/{id}`
+
+**Modified:** `api/router.py` — added admin + bulk routers (now 15 sub-routers)
+
+**Key features:**
+- Shop approval uses `VALID_SHOP_TRANSITIONS` state machine (pending→active/rejected, active→suspended, etc.)
+- Every admin action creates an `AuditLog` entry with old/new values
+- Shop status changes notify the owner via notification service
+- Admin can't modify their own account via the admin endpoint
+- CSV import validates name, SKU, price, stock; checks SKU uniqueness per shop; creates product + default variant
+- CSV export generates downloadable file via StorageBackend
+- File upload capped at 5MB, CSV-only validation
+- Platform settings use upsert (PUT) — create if missing, update if exists
+- Router now has 15 sub-routers, ~100+ API endpoints
+
+---
+
+### Frontend Phase 5: Admin Panel
+
+**Status:** Not started. Backend endpoints are ready.
+
+**What needs to be built:**
+- Admin layout with sidebar (separate from dashboard)
+- Shop approval/management page (list + status update)
+- User management page (list + activate/deactivate/role change)
+- Platform settings page (list + edit)
+- Payout management page (create payouts for shops)
+- Audit log viewer (paginated + filterable)
+- Admin dashboard stats page
 
 ---
 
@@ -709,9 +750,10 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 5. ~~**Coupons + reviews backend + frontend** (storefront polish) — ~2 sessions~~ **DONE**
 6. ~~**Phase 6B-6C backend** (refunds, notifications, addresses, wishlist) — 1 session~~ **DONE**
 7. ~~**Phase 6B-6C frontend integration** (hooks, API wrappers, UI) — ~1 session~~ **DONE**
-8. **Admin panel + bulk operations** (shop approval, users, CSV import) — ~2 sessions ← **NEXT**
-9. **Payments** (bKash/Nagad integration) — ~1 session
-10. **Testing** — ~2 sessions
+8. ~~**Admin backend + bulk operations** (shop approval, users, CSV import) — 1 session~~ **DONE**
+9. **Admin frontend panel** (admin layout, shop/user/settings/audit pages) — ~2 sessions ← **NEXT**
+10. **Payments** (bKash/Nagad integration) — ~1 session
+11. **Testing** — ~2 sessions
 
 ---
 
@@ -727,13 +769,13 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 | ~~Coupons + reviews (FE)~~ | ~~11 files~~ | ~~~1,260~~ | ~~1~~ | **DONE** |
 | ~~Phase 6B-6C (BE)~~ | ~~15 files~~ | ~~1,500~~ | ~~1~~ | **DONE** |
 | ~~Phase 6B-6C (FE integration)~~ | ~~22 new + 6 mod~~ | ~~2,200~~ | ~~1~~ | **DONE** |
-| Admin backend + frontend | ~10 files | ~1,500 | 2 | **NEXT** |
-| Bulk operations | 3 files | ~400 | 1 | pending |
+| ~~Admin backend + bulk~~ | ~~6+1 files~~ | ~~935~~ | ~~1~~ | **DONE** |
+| Admin frontend | ~10 files | ~1,500 | 2 | **NEXT** |
 | Testing | ~15 files | ~2,000 | 2 | pending |
-| **Total remaining** | **~28 files** | **~3,900 lines** | **~5 sessions** | |
+| **Total remaining** | **~25 files** | **~3,500 lines** | **~4 sessions** | |
 
-**Current codebase:** ~227 files (71 BE + 156 FE), ~24,600 lines (10,300 BE + 14,300 FE)
-**Projected final:** ~255 files, ~28,500 lines
+**Current codebase:** ~234 files (78 BE + 156 FE), ~25,500 lines (11,200 BE + 14,300 FE)
+**Projected final:** ~259 files, ~29,000 lines
 
 ---
 
@@ -785,8 +827,10 @@ I'll follow the CLAUDE.md patterns, create the files in the right order, and wir
 
 ## Final Words
 
-The platform is feature-rich and nearing completion. Customers can browse shops, view products, save to wishlist, apply coupon codes, read/write reviews, manage delivery addresses, add to cart, checkout with COD, track orders, request refunds on delivered orders, and receive in-app notifications. Shop owners can manage products (with variants and media), process orders (with status transitions), organize categories, create/manage discount coupons, reply to customer reviews, manage refund requests (approve/reject/process), view payout history, and configure their store (delivery zones, payment methods, staff). The codebase is at ~227 files and ~24,600 lines with consistent patterns throughout.
+The platform is feature-rich and nearing completion. Customers can browse shops, view products, save to wishlist, apply coupon codes, read/write reviews, manage delivery addresses, add to cart, checkout with COD, track orders, request refunds on delivered orders, and receive in-app notifications. Shop owners can manage products (with variants and media), process orders (with status transitions), organize categories, create/manage discount coupons, reply to customer reviews, manage refund requests (approve/reject/process), view payout history, bulk import/export products via CSV, and configure their store (delivery zones, payment methods, staff). Admins can approve/reject/suspend shops, manage users, configure platform settings, view audit logs, and manage payouts. The codebase is at ~234 files and ~25,500 lines with consistent patterns throughout.
 
-**My recommendation: Build Phase 6D (Admin + Bulk) next.** This is the last major feature block before the platform is functionally complete. Create the admin backend (shop approval, user management, platform settings, audit logs, bulk CSV import/export) and admin frontend panel. After that, add payments (bKash/Nagad), then testing.
+**The entire backend is now feature-complete.** All 15 service files, 15 schema files, and 15 route files are implemented with ~100+ API endpoints.
+
+**My recommendation: Build the Admin Frontend (Phase 5) next.** The backend endpoints are ready — create the admin layout, shop approval page, user management page, platform settings page, and audit log viewer. After that, add payments (bKash/Nagad), then testing.
 
 Let's build.
