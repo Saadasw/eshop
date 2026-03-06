@@ -244,7 +244,7 @@ const formatDate = (utcString: string) =>
 
 ```
 /api/v1/auth/...                    → Authentication
-/api/v1/users/me                    → Current user profile
+/api/v1/users/me                    → Current user profile (NOT YET IMPLEMENTED)
 /api/v1/shops                       → List/create shops
 /api/v1/shops/{slug}                → Shop detail
 /api/v1/shops/{slug}/products       → Products in shop
@@ -352,7 +352,7 @@ If a helper is used by only one service, keep it in that service. Move to utils 
 
 ## Backend Build Order (Follow This Sequence)
 
-### Phase 1: Foundation (Do This First)
+### Phase 1: Foundation (Do This First) — COMPLETE
 1. `app/config.py` — Pydantic Settings (SUPABASE_URL, SUPABASE_KEY, SECRET_KEY, etc.)
 2. `app/db/session.py` — AsyncSession with Supabase connection string
 3. `app/db/base.py` — SQLAlchemy Base with TimestampMixin, SoftDeleteMixin
@@ -361,32 +361,32 @@ If a helper is used by only one service, keep it in that service. Move to utils 
 6. `app/core/storage.py` — StorageBackend protocol + SupabaseStorage implementation (vendor-agnostic file storage)
 7. `app/core/auth_verifier.py` — AuthVerifier protocol + SupabaseAuthVerifier implementation (vendor-agnostic token verification)
 
-### Phase 2: Auth
+### Phase 2: Auth — COMPLETE
 8. `app/core/security.py` — JWT creation/verification, bcrypt hashing
 9. `app/schemas/user.py` — UserCreate, UserRead, TokenPair
 10. `app/services/auth_service.py` — Register, login, OTP, session management (uses AuthVerifier protocol)
 11. `app/api/v1/auth.py` — Auth routes
 12. `app/dependencies.py` — get_current_user, get_current_shop
 
-### Phase 3: Shop & Products
+### Phase 3: Shop & Products — COMPLETE
 13. `app/schemas/shop.py`, `app/schemas/product.py`
 14. `app/services/shop_service.py` — Shop CRUD, config, staff
 15. `app/services/product_service.py` — Product/variant CRUD, media upload via StorageBackend, price sync
 16. `app/api/v1/shops.py`, `app/api/v1/products.py`, `app/api/v1/categories.py`
 
-### Phase 4: Cart & Orders
+### Phase 4: Cart & Orders — COMPLETE
 17. `app/schemas/cart.py`, `app/schemas/order.py`
 18. `app/services/cart_service.py` — Add/remove, guest merge, stock check
 19. `app/services/order_service.py` — Cart→Order conversion, snapshots, status machine
 20. `app/api/v1/cart.py`, `app/api/v1/orders.py`
 
-### Phase 5: Payments
+### Phase 5: Payments — NOT STARTED
 21. `app/schemas/payment.py`
 22. `app/utils/bd_payments.py` — bKash/Nagad API clients
 23. `app/services/payment_service.py` — Payment creation, webhook handling
 24. `app/api/v1/payments.py`, `app/api/webhooks/bkash.py`
 
-### Phase 6A: Coupons & Reviews
+### Phase 6A: Coupons & Reviews — COMPLETE
 25. `app/schemas/coupon.py` — CouponCreate (code, discount_type, discount_value, min_order_amount, max_discount_amount, max_usage, max_usage_per_user, applies_to, target_category_id, target_product_id, valid_from, valid_until), CouponRead, CouponUpdate, CouponUsageRead
 26. `app/services/coupon_service.py` — Create/list/update/soft-delete coupons (scoped by shop_id). Validate coupon (active, within date range, usage limits, min order amount, scope match). Apply coupon to order (create CouponUsage record — trigger auto-increments times_used). Unique constraint: (shop_id, code).
 27. `app/api/v1/coupons.py` — Routes: POST/GET/PATCH/DELETE `/shops/{slug}/coupons`, POST `/shops/{slug}/coupons/validate` (check if coupon is applicable for a cart)
@@ -394,7 +394,7 @@ If a helper is used by only one service, keep it in that service. Move to utils 
 29. `app/services/review_service.py` — Create review (must have completed order for product), list by product (paginated, visible only), shop reply. DB trigger handles avg_rating/review_count sync.
 30. `app/api/v1/reviews.py` — Routes: POST `/shops/{slug}/products/{id}/reviews`, GET `/shops/{slug}/products/{id}/reviews`, POST `/shops/{slug}/reviews/{id}/reply` (owner/staff), DELETE `/shops/{slug}/reviews/{id}` (soft delete, owner/staff)
 
-### Phase 6B: Refunds & Payouts
+### Phase 6B: Refunds & Payouts — COMPLETE
 31. `app/schemas/refund.py` — RefundRequest (order_id, reason, items with quantities), RefundRead, RefundItemRead. State machine: requested→approved→processing→completed|failed|rejected.
 32. `app/services/refund_service.py` — Request refund (customer), approve/reject (owner/staff), process (mark completed/failed), restock items if restocked=true. Uses VALID_REFUND_TRANSITIONS from state_machines.py.
 33. `app/api/v1/refunds.py` — Routes: POST `/orders/{id}/refund` (customer), GET/PATCH `/shops/{slug}/refunds` (owner/staff manage)
@@ -402,7 +402,7 @@ If a helper is used by only one service, keep it in that service. Move to utils 
 35. `app/services/payout_service.py` — Calculate payout for a period (sum order totals - commissions - refund deductions), create payout record, update status. Uses VALID_PAYOUT_TRANSITIONS.
 36. `app/api/v1/payouts.py` — Routes: GET `/shops/{slug}/payouts` (owner), POST/PATCH `/admin/payouts` (admin)
 
-### Phase 6C: Notifications & Addresses & Wishlist
+### Phase 6C: Notifications & Addresses & Wishlist — COMPLETE
 37. `app/schemas/notification.py` — NotificationRead, NotificationMarkRead
 38. `app/services/notification_service.py` — Create notification (internal helper called by other services on events), list for user (paginated, unread count), mark read, mark all read. Notifications are created by: order placement, status change, low stock, new review, refund update, payout completed.
 39. `app/api/v1/notifications.py` — Routes: GET `/notifications` (user), PATCH `/notifications/{id}/read`, POST `/notifications/mark-all-read`
@@ -413,7 +413,7 @@ If a helper is used by only one service, keep it in that service. Move to utils 
 44. `app/services/wishlist_service.py` — Add/remove/list wishlist items. Unique constraint: (user_id, product_id).
 45. `app/api/v1/wishlist.py` — Routes: POST/GET/DELETE `/wishlist`
 
-### Phase 6D: Admin & Bulk Operations
+### Phase 6D: Admin & Bulk Operations — COMPLETE
 46. `app/schemas/admin.py` — ShopApprovalRequest (status, rejection_reason), PlatformSettingRead/Update, UserAdminRead, AuditLogRead
 47. `app/services/admin_service.py` — Approve/reject/suspend/ban shops (uses VALID_SHOP_TRANSITIONS). List/manage users (activate, deactivate, change role). CRUD for PlatformSettings. View audit logs (paginated, filterable by entity_type, action, date range).
 48. `app/api/v1/admin.py` — Routes: PATCH `/admin/shops/{id}/status`, GET/PATCH `/admin/users`, GET/PUT `/admin/settings`, GET `/admin/audit-logs`
@@ -425,20 +425,20 @@ If a helper is used by only one service, keep it in that service. Move to utils 
 
 ## Frontend Build Order (Follow This Sequence)
 
-### Phase 1: Foundation
+### Phase 1: Foundation — COMPLETE
 1. Next.js 16 project with App Router, TypeScript, Tailwind, shadcn/ui
 2. `src/lib/supabase/` — Client and server Supabase instances
 3. `src/lib/api/client.ts` — Axios wrapper for FastAPI
 4. `src/providers/` — Auth, Query, Toast providers
 5. `src/types/database.ts` — Generate with `npx supabase gen types typescript`
 
-### Phase 2: Auth Pages
+### Phase 2: Auth Pages — COMPLETE
 6. Login page (phone + OTP, or email + password)
 7. Register page
 8. OTP verification page
 9. Auth middleware (redirect unauthenticated users)
 
-### Phase 3: Customer Storefront
+### Phase 3: Customer Storefront — COMPLETE
 10. Shop discovery page (list of active shops)
 11. Shop storefront `[slug]/page.tsx` (product grid, categories, search)
 12. Product detail page (variant selector, image gallery, reviews, add-to-cart)
@@ -446,7 +446,7 @@ If a helper is used by only one service, keep it in that service. Move to utils 
 14. Order placement flow (address selection, payment method, confirm)
 15. Order history + detail page
 
-### Phase 4: Shop Owner Dashboard
+### Phase 4: Shop Owner Dashboard — COMPLETE
 16. Dashboard layout (sidebar navigation)
 17. Dashboard home (sales stats, recent orders)
 18. Product management (list, create, edit with variants)
@@ -456,7 +456,7 @@ If a helper is used by only one service, keep it in that service. Move to utils 
 22. Review management (reply to reviews)
 23. Settings (shop config, delivery zones, payment methods, staff)
 
-### Phase 5: Admin Panel
+### Phase 5: Admin Panel — COMPLETE
 24. Admin layout
 25. Shop approval/management
 26. User management
@@ -630,18 +630,20 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 10. **Coupon usage trigger exists in DB.** When you INSERT into `coupon_usage`, the DB trigger automatically increments `coupon.times_used`. Just insert the usage record.
 
+11. **Next.js 16 async params.** In Next.js 16, page `params` are Promises and must be awaited: `const { slug } = await params`. This applies to all page components receiving route params. Forgetting `await` will cause runtime errors.
+
 ---
 
 ## File Size Guidelines
 
 - Models: ~50-80 lines per domain file
-- Schemas: ~30-60 lines per domain file
-- Services: ~100-200 lines per domain file
-- Routes: ~50-100 lines per domain file
-- React components: ~50-150 lines each
+- Schemas: ~30-105 lines per domain file
+- Services: ~100-720 lines per domain file (complex domains like shop/product/order are larger)
+- Routes: ~50-400 lines per domain file (shops router is the largest due to many sub-resources)
+- React components: ~50-250 lines each
 - Pages: ~30-80 lines each (delegate to components)
 
-Total estimated: ~15,000-20,000 lines of code across backend + frontend.
+Current codebase: ~249 files (78 backend + 171 frontend), ~27,000 lines (11,200 backend + 15,800 frontend).
 
 ---
 
@@ -660,6 +662,119 @@ Total estimated: ~15,000-20,000 lines of code across backend + frontend.
 - **Backend**: Railway or Fly.io (needs always-on server for webhooks)
 - **Database**: Supabase (free tier: 500MB, good for MVP)
 - **Domain**: Custom domain on Vercel + API subdomain on Railway
+
+---
+
+## Implementation Notes (Deviations & Additions from Original Plan)
+
+This section documents decisions made during actual implementation that differ from or extend the original plan above. When the plan above and this section conflict, **this section wins**.
+
+### Backend — Structural Additions
+
+These files were created during implementation but not listed in the original build order:
+
+| File | Purpose |
+|------|---------|
+| `app/schemas/common.py` | `PaginatedResponse[T]` (generic) and `ErrorResponse` — shared across all routes |
+| `app/api/router.py` | Master router that wires all 15 sub-routers into `api_router` with `/api/v1` prefix |
+| `app/services/category_service.py` | Separated from product_service — category CRUD (~175 lines) |
+| `app/core/state_machines.py` | All 5 state machines (order, shop, payment, refund, payout) — created in Phase 1, referenced from §7 above |
+| `app/models/enums.py` | All 26 ENUMs centralized in one file |
+| `app/models/archive.py` | OrderArchive, PaymentArchive, AuditLogArchive models |
+| `app/models/audit.py` | AuditLog, BulkJob, PlatformSetting models |
+| `app/models/notification.py` | Notification model |
+
+### Backend — Service Pattern: Functions, Not Classes
+
+The original plan (§ Key Design Patterns) shows a class-based service pattern (`class ProductService:`). The actual implementation uses **module-level async functions** instead:
+
+```python
+# ACTUAL PATTERN (what was built)
+# app/services/product_service.py
+async def create_product(db: AsyncSession, shop_id: UUID, data: ProductCreate) -> Product:
+    """Create a product with a default variant."""
+    ...
+
+# NOT THIS (what the plan showed)
+# class ProductService:
+#     async def create(self, db, shop_id, data): ...
+```
+
+The one exception is `AuthService`, which is a class because it takes an `AuthVerifier` dependency in its constructor.
+
+### Backend — Auth Helpers
+
+Reusable permission-check helpers live in `shop_service.py`:
+
+- `require_shop_owner(user, shop)` — raises 403 if user is not the shop owner
+- `require_shop_owner_or_staff(user, shop, db)` — raises 403 if user is neither owner nor active staff
+
+Routes call these instead of inline permission checks.
+
+### Backend — Missing Endpoints
+
+These endpoints are listed in the API URL structure above but are **not yet implemented**:
+
+- `GET/PATCH/DELETE /api/v1/users/me` — current user profile
+- `POST /api/v1/orders/{id}/pay` — payment initiation (Backend Phase 5)
+- `POST /api/v1/webhooks/bkash` — bKash IPN webhook (Backend Phase 5)
+- `POST /api/v1/webhooks/nagad` — Nagad callback webhook (Backend Phase 5)
+
+### Backend — Missing Utility Files
+
+These planned utility files have not been created yet (YAGNI — not needed so far):
+
+- `app/utils/validators.py` — BD phone, slug, BDT amount validators
+- `app/utils/bd_payments.py` — bKash/Nagad API client wrappers (needed for Phase 5)
+- `app/utils/pagination.py` — shared pagination logic (each service handles its own for now)
+
+### Frontend — Route Group Structure
+
+The app uses four Next.js route groups, each with its own layout:
+
+```
+app/
+├── (auth)/          → Centered auth layout (login, register, OTP)
+├── (storefront)/    → Navbar + main container (shops, products, orders, wishlist, addresses)
+├── (dashboard)/     → DashboardShell with sidebar (shop owner pages at /dashboard/[slug]/...)
+└── (admin)/         → AdminShell with sidebar (admin pages at /admin/...)
+```
+
+### Frontend — Additional Files Not in Original Plan
+
+| File | Purpose |
+|------|---------|
+| `src/proxy.ts` | Next.js 16 proxy for Supabase cookie refresh |
+| `src/lib/utils/constants.ts` | Centralized API routes, frontend routes, sort options, page size |
+| `src/lib/utils/format.ts` | `formatDateBST()`, `formatBDT()`, phone helpers |
+| `src/lib/utils/slug.ts` | `generateSlug(name)` — kebab-case slug generator |
+| `src/hooks/use-auth-redirect.ts` | Redirect logged-in users away from auth pages |
+
+### Frontend — Architectural Patterns
+
+These patterns emerged during implementation and should be followed for consistency:
+
+1. **Access token in memory.** Stored in a module variable (not localStorage/cookies) to prevent XSS. Auto-refresh on 401 via Axios interceptor with request queue.
+
+2. **Pagination component props.** Uses `total/skip/limit/onChange` (offset-based), not `currentPage/totalPages/onPageChange`.
+
+3. **Coupon codes are uppercase.** Stored and compared as uppercase. Frontend uppercases input before sending.
+
+4. **Dialog discriminated unions.** Create/edit dialogs use `{ mode: "create" } | { mode: "edit"; data: T }` for type-safe forms.
+
+5. **Shell components handle auth once.** `DashboardShell` verifies ownership, `AdminShell` verifies admin role. Child pages just receive the slug prop — no redundant auth checks.
+
+6. **Notification polling.** `useUnreadCount` polls every 30 seconds via `refetchInterval`.
+
+7. **URL-based filter state.** Storefront uses URL search params (`?search=&category=&sort=&page=`) for bookmarkable/shareable filtered views.
+
+### What's Left to Build
+
+| Area | Status | Details |
+|------|--------|---------|
+| Backend Phase 5 (Payments) | NOT STARTED | bKash/Nagad/COD payment flow, webhook receivers |
+| `/api/v1/users/me` endpoint | NOT STARTED | GET/PATCH/DELETE for current user profile |
+| Testing | NOT STARTED | pytest + vitest + Playwright, zero coverage currently |
 
 ---
 
