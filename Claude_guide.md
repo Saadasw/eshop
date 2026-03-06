@@ -1,6 +1,6 @@
 # Claude Guide — E-Shop Platform Status & Roadmap
 
-> **Last updated:** 2026-03-06 (Phase 6D backend complete — admin + bulk)
+> **Last updated:** 2026-03-06 (Frontend Phase 5 complete — admin panel)
 > **Author:** Claude (AI Assistant)
 > **Purpose:** This document is a living conversation between Claude and you (the developer). It tells you exactly where the project stands, what's been built, what's missing, what's good, what needs fixing, and the precise path forward — phase by phase, file by file.
 
@@ -41,14 +41,14 @@
     │  FRONTEND DASHBOARD     ████████████████████████  100%   │
     │  FRONTEND COUPONS+REVS  ████████████████████████  100%   │
     │  FRONTEND 6B-6C         ████████████████████████  100%   │
-    │  FRONTEND ADMIN         ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
+    │  FRONTEND ADMIN         ████████████████████████  100%   │
     │  TESTING                ░░░░░░░░░░░░░░░░░░░░░░░░   0%   │
     ├──────────────────────────────────────────────────────────┤
-    │  OVERALL                █████████████████████░░░  ~83%  │
+    │  OVERALL                ██████████████████████░░  ~90%  │
     └──────────────────────────────────────────────────────────┘
 ```
 
-**In plain English:** The customer-facing app, shop owner dashboard, and all Phase 6A-6D backend features are complete. Customers can browse shops, buy products, apply coupon codes at checkout, view product reviews, manage delivery addresses, maintain wishlists, receive notifications, request refunds on delivered orders, and track orders. Shop owners can manage products, process orders, handle categories, create/manage coupons, reply to reviews, process refunds, view payouts, bulk import/export products via CSV, and configure settings. Admins can approve/reject/suspend shops, manage users, configure platform settings, view audit logs, and manage payouts. The navbar has a notification bell with unread count, wishlist heart buttons on products, and user dropdown links to Wishlist and Addresses pages. What's left: admin frontend panel (Phase 5 frontend), payments backend (bKash/Nagad), and testing.
+**In plain English:** The entire frontend is feature-complete. Customers can browse shops, buy products, apply coupon codes at checkout, view product reviews, manage delivery addresses, maintain wishlists, receive notifications, request refunds on delivered orders, and track orders. Shop owners can manage products, process orders, handle categories, create/manage coupons, reply to reviews, process refunds, view payouts, bulk import/export products via CSV, and configure settings. Admins have a full panel at `/admin` with dashboard stats, shop approval/management, user management, payout creation/management, platform settings, and audit log viewer. The navbar shows an "Admin Panel" link for admin users, a notification bell with unread count, wishlist heart buttons on products, and user dropdown links to Wishlist and Addresses pages. What's left: payments backend (bKash/Nagad) and testing.
 
 ---
 
@@ -165,6 +165,15 @@ frontend/src/
 │   ├── layout.tsx               ✅ Root layout with Providers (Geist font)
 │   ├── page.tsx                 ✅ Landing with Browse Shops + Login/Register buttons
 │   ├── globals.css              ✅ Tailwind v4 theme (light/dark, oklch)
+│   ├── (admin)/
+│   │   └── admin/
+│   │       ├── layout.tsx           ✅ AdminShell wrapper
+│   │       ├── page.tsx             ✅ Admin dashboard (stats)
+│   │       ├── shops/page.tsx       ✅ Shop management
+│   │       ├── users/page.tsx       ✅ User management
+│   │       ├── settings/page.tsx    ✅ Platform settings
+│   │       ├── payouts/page.tsx     ✅ Payout management
+│   │       └── audit-logs/page.tsx  ✅ Audit log viewer
 │   ├── (auth)/
 │   │   ├── layout.tsx           ✅ Centered auth layout
 │   │   ├── login/page.tsx       ✅ Login page (email + phone OTP tabs)
@@ -217,7 +226,7 @@ frontend/src/
 │   │   ├── otp-form.tsx         ✅ 223 lines — 6-digit OTP + resend timer
 │   │   └── auth-guard.tsx       ✅ 37 lines — protected route wrapper
 │   ├── storefront/
-│   │   ├── navbar.tsx           ✅ Top nav — logo, Browse Shops, cart badge, notification bell, user dropdown
+│   │   ├── navbar.tsx           ✅ Top nav — logo, Browse Shops, cart badge, notification bell, admin link, user dropdown
 │   │   ├── shop-card.tsx        ✅ Shop card — avatar, name, description, rating
 │   │   ├── shop-header.tsx      ✅ Shop banner + logo + name + rating
 │   │   ├── shop-list-page.tsx   ✅ Client — paginated shop grid with skeletons
@@ -252,6 +261,15 @@ frontend/src/
 │   │   ├── wishlist-page.tsx    ✅ Client — paginated wishlist with remove action
 │   │   ├── address-page.tsx     ✅ Client — address CRUD with create/edit dialog
 │   │   └── refund-dialog.tsx    ✅ Client — item selector + reason for refund request
+│   ├── admin/
+│   │   ├── admin-shell.tsx            ✅ Auth guard + admin role check + sidebar + topbar + mobile hamburger
+│   │   ├── admin-sidebar.tsx          ✅ Nav links (Dashboard, Shops, Users, Payouts, Settings, Audit Logs)
+│   │   ├── admin-dashboard.tsx        ✅ Platform stats cards (users, shops, orders, revenue)
+│   │   ├── shop-management.tsx        ✅ Shop list + status filter + approval dialog with state machine
+│   │   ├── user-management.tsx        ✅ User list + role/status filter + edit dialog
+│   │   ├── settings-management.tsx    ✅ Platform settings CRUD with JSON editor
+│   │   ├── payout-management.tsx      ✅ Shop selector + payout list + create/status update dialogs
+│   │   └── audit-log-viewer.tsx       ✅ Paginated log table + filter + detail dialog
 │   ├── dashboard/
 │   │   ├── dashboard-shell.tsx        ✅ Auth guard + owner verification + sidebar + topbar + mobile hamburger
 │   │   ├── dashboard-sidebar.tsx      ✅ Nav links (Home, Orders, Products, Categories, Coupons, Reviews, Refunds, Payouts, Settings) + active state
@@ -315,12 +333,13 @@ frontend/src/
 │   │   ├── payouts.ts            ✅ listPayouts
 │   │   ├── notifications.ts      ✅ listNotifications, getUnreadCount, markRead, markAllRead
 │   │   ├── addresses.ts          ✅ listAddresses, createAddress, updateAddress, deleteAddress
-│   │   └── wishlist.ts           ✅ listWishlist, addToWishlist, removeFromWishlist
+│   │   ├── wishlist.ts           ✅ listWishlist, addToWishlist, removeFromWishlist
+│   │   └── admin.ts             ✅ stats, shops, users, settings, audit logs, payouts CRUD
 │   ├── supabase/
 │   │   ├── client.ts            ✅ Browser Supabase client
 │   │   └── server.ts            ✅ Server Supabase client (SSR cookies)
 │   ├── utils/
-│   │   ├── constants.ts         ✅ Routes, API endpoints, BD locale, sort options, page size, dashboard routes
+│   │   ├── constants.ts         ✅ Routes, API endpoints, BD locale, sort options, page size, dashboard + admin routes
 │   │   ├── format.ts            ✅ formatDateBST, formatBDT, phone helpers
 │   │   └── slug.ts              ✅ generateSlug(name) — kebab-case slug generator
 │   └── utils.ts                 ✅ cn() utility (clsx + tailwind-merge)
@@ -342,7 +361,8 @@ frontend/src/
 │   ├── use-payouts.ts            ✅ usePayouts
 │   ├── use-notifications.ts      ✅ useNotifications, useUnreadCount (30s poll), useMarkRead, useMarkAllRead
 │   ├── use-addresses.ts          ✅ useAddresses, useCreateAddress, useUpdateAddress, useDeleteAddress
-│   └── use-wishlist.ts           ✅ useWishlist, useAddToWishlist, useRemoveFromWishlist
+│   ├── use-wishlist.ts           ✅ useWishlist, useAddToWishlist, useRemoveFromWishlist
+│   └── use-admin.ts             ✅ 11 hooks (stats, shops, users, settings, audit logs, payouts)
 │
 ├── providers/
 │   ├── providers.tsx            ✅ Composite provider wrapper
@@ -351,7 +371,7 @@ frontend/src/
 │   └── toast-provider.tsx       ✅ Sonner toaster
 │
 ├── types/
-│   └── database.ts              ✅ ~870 lines — all TypeScript types (incl. refund, payout, notification, address, wishlist)
+│   └── database.ts              ✅ ~965 lines — all TypeScript types (incl. admin, refund, payout, notification, address, wishlist)
 │
 └── proxy.ts                     ✅ Next.js 16 proxy (Supabase cookie refresh)
 ```
@@ -412,7 +432,7 @@ The `/api/v1/users/me` endpoint (GET, PATCH, DELETE for the current user's profi
 | ~~**Phase 4B: Dashboard**~~ | ~~Shop owner dashboard with sidebar~~ | **DONE** (35 new files + 4 backend, ~4,500 lines) |
 | ~~**Phase 6A: Coupons+Reviews**~~ | ~~Backend+frontend for coupons and reviews~~ | **DONE** (6 BE + 11 FE files, ~1,900 lines) |
 | ~~**Phase 6B-6C: Frontend**~~ | ~~Refunds, payouts, notifications, addresses, wishlist UI~~ | **DONE** (22 new + 6 modified files, ~2,200 lines) |
-| **Phase 5: Admin (FE)** | Admin panel with sidebar (backend ready) | ~5 pages, ~10 components |
+| ~~**Phase 5: Admin (FE)**~~ | ~~Admin panel with sidebar~~ | **DONE** (6 pages, 7 components, ~1,500 lines) |
 
 ### 3.5 Testing — Zero Coverage
 
@@ -468,15 +488,10 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 │  ✅ DONE: Phase 6B-6C (Refunds, Payouts, Notifications,  │
 │  Addresses, Wishlist — Backend + Frontend) — 37 files    │
 │  ✅ DONE: Backend Phase 6D (Admin + Bulk) — 6 new files  │
+│  ✅ DONE: Frontend Phase 5 (Admin Panel) — 15 new files  │
 └────────────────────────┬────────────────────────────────┘
                          │
                     YOU ARE HERE
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│  Frontend Phase 5 (Admin Panel)                         │
-│  Why: Platform management — needed before launch        │
-└────────────────────────┬────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
@@ -704,18 +719,28 @@ Here's the recommended build order. It follows CLAUDE.md's phased approach but p
 
 ---
 
-### Frontend Phase 5: Admin Panel
+### Frontend Phase 5: Admin Panel — ✅ COMPLETE
 
-**Status:** Not started. Backend endpoints are ready.
+**Status:** Done (2026-03-06). 15 new files + 2 modified files, ~1,500 lines.
 
-**What needs to be built:**
-- Admin layout with sidebar (separate from dashboard)
-- Shop approval/management page (list + status update)
-- User management page (list + activate/deactivate/role change)
-- Platform settings page (list + edit)
-- Payout management page (create payouts for shops)
-- Audit log viewer (paginated + filterable)
-- Admin dashboard stats page
+**New files (15):**
+- **API wrapper:** `lib/api/admin.ts` — 10 API functions (stats, shops, users, settings, audit logs, payouts)
+- **Query hooks:** `hooks/use-admin.ts` — 11 hooks (stats, shops, users, settings, audit logs, payouts CRUD)
+- **Components (7):** `admin-shell.tsx` (auth guard + admin role check + sidebar + topbar), `admin-sidebar.tsx` (6 nav items), `admin-dashboard.tsx` (stats cards), `shop-management.tsx` (shop list + status update dialog with state machine), `user-management.tsx` (user list + role/status edit dialog), `settings-management.tsx` (JSON key/value settings CRUD), `payout-management.tsx` (shop selector + payout list + create/status update dialogs), `audit-log-viewer.tsx` (paginated log table + detail dialog)
+- **Pages (6):** `/admin` (dashboard), `/admin/shops`, `/admin/users`, `/admin/settings`, `/admin/payouts`, `/admin/audit-logs`
+- **Layout:** `app/(admin)/admin/layout.tsx`
+- **Types:** Added ~95 lines to `database.ts` (ShopAdminRead, UserAdminRead, PlatformSettingRead, AuditLogRead, AdminDashboardStats, PayoutCreate, PayoutStatusUpdate, AuditAction)
+
+**Modified files (2):** `constants.ts` (admin API routes + frontend routes), `navbar.tsx` (Admin Panel link for admin users)
+
+**Key features:**
+- Admin role guard in `admin-shell.tsx` — only users with `primary_role === "admin"` can access
+- Shop management with state machine transitions (pending→active/rejected, active→paused/suspended/closed, etc.)
+- User management with role change and active/inactive toggle
+- Platform settings with JSON editor (validates JSON object format)
+- Payout management: select shop → view payouts → create new payout (with commission rate) → update status (processing/completed/failed)
+- Audit log viewer with entity type and action filters, detail dialog showing old/new values
+- Navbar shows "Admin Panel" link in user dropdown for admin users
 
 ---
 
@@ -751,8 +776,8 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 6. ~~**Phase 6B-6C backend** (refunds, notifications, addresses, wishlist) — 1 session~~ **DONE**
 7. ~~**Phase 6B-6C frontend integration** (hooks, API wrappers, UI) — ~1 session~~ **DONE**
 8. ~~**Admin backend + bulk operations** (shop approval, users, CSV import) — 1 session~~ **DONE**
-9. **Admin frontend panel** (admin layout, shop/user/settings/audit pages) — ~2 sessions ← **NEXT**
-10. **Payments** (bKash/Nagad integration) — ~1 session
+9. ~~**Admin frontend panel** (admin layout, shop/user/settings/audit pages) — ~2 sessions~~ **DONE**
+10. **Payments** (bKash/Nagad integration) — ~1 session ← **NEXT**
 11. **Testing** — ~2 sessions
 
 ---
@@ -770,12 +795,12 @@ If you want to get to a **usable MVP** as fast as possible, here's what matters 
 | ~~Phase 6B-6C (BE)~~ | ~~15 files~~ | ~~1,500~~ | ~~1~~ | **DONE** |
 | ~~Phase 6B-6C (FE integration)~~ | ~~22 new + 6 mod~~ | ~~2,200~~ | ~~1~~ | **DONE** |
 | ~~Admin backend + bulk~~ | ~~6+1 files~~ | ~~935~~ | ~~1~~ | **DONE** |
-| Admin frontend | ~10 files | ~1,500 | 2 | **NEXT** |
+| ~~Admin frontend~~ | ~~15 files~~ | ~~1,500~~ | ~~1~~ | **DONE** |
 | Testing | ~15 files | ~2,000 | 2 | pending |
-| **Total remaining** | **~25 files** | **~3,500 lines** | **~4 sessions** | |
+| **Total remaining** | **~21 files** | **~2,800 lines** | **~3 sessions** | |
 
-**Current codebase:** ~234 files (78 BE + 156 FE), ~25,500 lines (11,200 BE + 14,300 FE)
-**Projected final:** ~259 files, ~29,000 lines
+**Current codebase:** ~249 files (78 BE + 171 FE), ~27,000 lines (11,200 BE + 15,800 FE)
+**Projected final:** ~270 files, ~29,800 lines
 
 ---
 
@@ -827,10 +852,10 @@ I'll follow the CLAUDE.md patterns, create the files in the right order, and wir
 
 ## Final Words
 
-The platform is feature-rich and nearing completion. Customers can browse shops, view products, save to wishlist, apply coupon codes, read/write reviews, manage delivery addresses, add to cart, checkout with COD, track orders, request refunds on delivered orders, and receive in-app notifications. Shop owners can manage products (with variants and media), process orders (with status transitions), organize categories, create/manage discount coupons, reply to customer reviews, manage refund requests (approve/reject/process), view payout history, bulk import/export products via CSV, and configure their store (delivery zones, payment methods, staff). Admins can approve/reject/suspend shops, manage users, configure platform settings, view audit logs, and manage payouts. The codebase is at ~234 files and ~25,500 lines with consistent patterns throughout.
+The platform is feature-complete across all three user roles. Customers can browse shops, view products, save to wishlist, apply coupon codes, read/write reviews, manage delivery addresses, add to cart, checkout with COD, track orders, request refunds on delivered orders, and receive in-app notifications. Shop owners can manage products (with variants and media), process orders (with status transitions), organize categories, create/manage discount coupons, reply to customer reviews, manage refund requests (approve/reject/process), view payout history, bulk import/export products via CSV, and configure their store (delivery zones, payment methods, staff). Admins have a dedicated panel at `/admin` to approve/reject/suspend shops, manage users (role + active status), configure platform settings (JSON key-value store), create and manage payouts for shops, and view filterable audit logs with old/new value diffs. The codebase is at ~249 files and ~27,000 lines with consistent patterns throughout.
 
-**The entire backend is now feature-complete.** All 15 service files, 15 schema files, and 15 route files are implemented with ~100+ API endpoints.
+**The entire backend and frontend are now feature-complete.** All 15 service files, 15 schema files, and 15 route files are implemented with ~100+ API endpoints. The admin panel is live at `/admin` with full shop/user/settings/payout management and audit logs.
 
-**My recommendation: Build the Admin Frontend (Phase 5) next.** The backend endpoints are ready — create the admin layout, shop approval page, user management page, platform settings page, and audit log viewer. After that, add payments (bKash/Nagad), then testing.
+**My recommendation: Add payments (bKash/Nagad) next.** Currently only COD is available. After that, add testing (pytest + vitest + Playwright) before deployment.
 
 Let's build.
