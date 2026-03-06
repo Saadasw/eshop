@@ -848,6 +848,107 @@ export interface CustomerAddressRead {
   updated_at: string;
 }
 
+// --- Admin ---
+
+export type AuditAction =
+  | "create"
+  | "update"
+  | "delete"
+  | "status_change"
+  | "login"
+  | "logout"
+  | "export"
+  | "import";
+
+export interface ShopAdminRead {
+  shop_id: string;
+  owner_id: string;
+  slug: string;
+  shop_name: string;
+  status: ShopStatus;
+  contact_email: string | null;
+  contact_phone: string | null;
+  trade_license_no: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ShopApprovalRequest {
+  status: ShopStatus;
+  rejection_reason?: string | null;
+}
+
+export interface UserAdminRead {
+  user_id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  primary_role: UserRole;
+  is_active: boolean;
+  is_verified: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserAdminUpdate {
+  is_active?: boolean | null;
+  primary_role?: UserRole | null;
+}
+
+export interface PlatformSettingRead {
+  key: string;
+  value: Record<string, unknown>;
+  description: string | null;
+  updated_by: string | null;
+  updated_at: string;
+}
+
+export interface PlatformSettingUpdate {
+  value: Record<string, unknown>;
+  description?: string | null;
+}
+
+export interface AuditLogRead {
+  log_id: string;
+  user_id: string | null;
+  shop_id: string | null;
+  entity_type: string;
+  entity_id: string;
+  action: AuditAction;
+  old_values: Record<string, unknown> | null;
+  new_values: Record<string, unknown> | null;
+  ip_address: string | null;
+  created_at: string;
+}
+
+export interface AdminDashboardStats {
+  total_users: number;
+  total_shops: number;
+  pending_shops: number;
+  active_shops: number;
+  total_orders: number;
+  total_revenue: number;
+}
+
+export interface PayoutCreate {
+  shop_id: string;
+  period_start: string;
+  period_end: string;
+  payout_method: PayoutMethod;
+  commission_rate?: string;
+  notes?: string | null;
+}
+
+export interface PayoutStatusUpdate {
+  status: PayoutStatus;
+  transaction_reference?: string | null;
+  notes?: string | null;
+}
+
 // --- Wishlist ---
 
 export interface WishlistItemAdd {

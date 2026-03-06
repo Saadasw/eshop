@@ -85,6 +85,18 @@ export const API_ROUTES = {
   SHOP_REFUND: (slug: string, refundId: string) =>
     `/api/v1/shops/${slug}/refunds/${refundId}`,
   SHOP_PAYOUTS: (slug: string) => `/api/v1/shops/${slug}/payouts`,
+  ADMIN: {
+    STATS: "/api/v1/admin/stats",
+    SHOPS: "/api/v1/admin/shops",
+    SHOP_STATUS: (shopId: string) => `/api/v1/admin/shops/${shopId}/status`,
+    USERS: "/api/v1/admin/users",
+    USER: (userId: string) => `/api/v1/admin/users/${userId}`,
+    SETTINGS: "/api/v1/admin/settings",
+    SETTING: (key: string) => `/api/v1/admin/settings/${key}`,
+    AUDIT_LOGS: "/api/v1/admin/audit-logs",
+    PAYOUTS: "/api/v1/admin/payouts",
+    PAYOUT: (payoutId: string) => `/api/v1/admin/payouts/${payoutId}`,
+  },
 } as const;
 
 /** Frontend page paths. */
@@ -117,6 +129,12 @@ export const ROUTES = {
   DASHBOARD_PAYOUTS: (slug: string) => `/dashboard/${slug}/payouts`,
   WISHLIST: "/wishlist",
   ADDRESSES: "/addresses",
+  ADMIN: "/admin",
+  ADMIN_SHOPS: "/admin/shops",
+  ADMIN_USERS: "/admin/users",
+  ADMIN_SETTINGS: "/admin/settings",
+  ADMIN_PAYOUTS: "/admin/payouts",
+  ADMIN_AUDIT_LOGS: "/admin/audit-logs",
 } as const;
 
 /** localStorage / cookie key names for auth tokens. */

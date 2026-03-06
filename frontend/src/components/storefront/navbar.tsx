@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Store, LogOut, User, LayoutDashboard, Heart, MapPin } from "lucide-react";
+import { ShoppingCart, Store, LogOut, User, LayoutDashboard, Heart, MapPin, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -38,6 +38,7 @@ export function Navbar() {
   const shopSlug = extractShopSlug(pathname);
   const { data: cart } = useCart(shopSlug ?? "");
 
+  const isAdmin = user?.primary_role === "admin";
   const isOwner = user?.primary_role === "owner";
   const { data: myShops } = useShops(
     isOwner ? { owner_id: user.user_id, limit: 1 } : undefined,
@@ -103,6 +104,17 @@ export function Navbar() {
                   <User className="mr-2 h-4 w-4" />
                   {user.full_name}
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={ROUTES.ADMIN}>
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin Panel
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 {ownerShopSlug && (
                   <>
                     <DropdownMenuItem asChild>
