@@ -4,7 +4,9 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     addresses,
+    admin,
     auth,
+    bulk,
     cart,
     categories,
     coupons,
@@ -33,3 +35,5 @@ api_router.include_router(wishlist.router)
 api_router.include_router(notifications.router)
 api_router.include_router(refunds.router)
 api_router.include_router(payouts.router)
+api_router.include_router(admin.router)
+api_router.include_router(bulk.router)
